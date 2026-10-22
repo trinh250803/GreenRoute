@@ -18,7 +18,7 @@ services:
       # Keeps sign-ins valid across restarts (free tier wipes the disk).
       - key: SESSION_SECRET
         generateValue: true
-      - key: ENV_BANNER
+      - key: APP_ENV_BANNER
         value: "Môi trường nghiên cứu, chưa áp dụng chính thức"
       # Secrets: entered in the Render dashboard, never committed.
       - key: ADMIN_PASSWORD
