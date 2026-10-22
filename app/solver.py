@@ -35,7 +35,7 @@ def prepare_vehicles(vehicles: list[dict], cfg: dict, weights: dict) -> list[dic
         rate = num(v.get("consumption_rate")) or 0.0
         price = num(v.get("fuel_price"))
         if price is None:
-            price = fuel["price_vnd"] if fuel else 0.0
+            price = (num(fuel.get("price_vnd")) if fuel else None) or 0.0  # unknown price: excluded from the objective, flagged in results
         f = resolve_factor(v["fuel_blend_code"], cfg, v)
         co2_per_km = 0.0 if fuel and fuel["kind"] == "electric" else rate / 100 * (f["value"] or 0.0)
         per_km = v["cost_per_km"] + rate / 100 * price + weights["co2_vnd_per_kg"] * co2_per_km
@@ -197,6 +197,45 @@ def unassigned_reason(o: dict, oi: int, vehicles: list[dict], prob: Problem) -> 
     return {"code": "FLEET_CAPACITY_EXHAUSTED", "message": "Đội xe hết tải trọng/thời gian — cần thêm xe hoặc nới khung giờ"}
 
 
+def _peak_windows(cfg) -> tuple[list, float]:
+    t = cfg.get("traffic") or {}
+    wins = []
+    for a, b in t.get("peak_windows", []):
+        h1, m1 = map(int, a.split(":")); h2, m2 = map(int, b.split(":"))
+        wins.append((h1 * 3600 + m1 * 60, h2 * 3600 + m2 * 60))
+    return wins, float(t.get("peak_speed_factor") or 1)
+
+
+def _peak_overlap_s(start: int, end: int, wins) -> int:
+    return sum(max(0, min(end, b) - max(start, a)) for a, b in wins)
+
+
+def peak_analysis(v, seq, prob: Problem, cfg) -> dict:
+    """Estimate, per leg, the extra time if the leg runs in peak hours at peak_speed_factor of
+    normal speed. The plan itself is computed at normal speed; this flags the risk."""
+    wins, f = _peak_windows(cfg)
+    tt = prob.travel_s(v["speed_kmh"])
+    extra_per_s = (1 / f - 1) if 0 < f < 1 else 0
+    legs, depart, prev, cum = [], int(v["start_time"] * 60), 0, 0.0
+    for i in seq + [None]:
+        node = 0 if i is None else i + 1
+        arrive = depart + tt[prev][node]
+        delay = _peak_overlap_s(depart, arrive, wins) * extra_per_s
+        cum += delay
+        leg = {"peak": delay > 0, "delay_min": round(delay / 60, 1)}
+        if i is not None:
+            o = prob.orders[i]
+            start = max(arrive, int(o["tw_start"] * 60)) if o["tw_start"] is not None else arrive
+            cum = max(0.0, cum - (start - arrive))  # waiting time absorbs delay
+            est = start + cum
+            leg.update(est_arrival_min=round(est / 60, 1), late_risk=o["tw_end"] is not None and est > o["tw_end"] * 60)
+            depart = start + prob.service_s[node]
+        legs.append(leg)
+        prev = node
+    return {"legs": legs, "delay_min": round(sum(l["delay_min"] for l in legs), 1),
+            "peak_legs": sum(1 for l in legs if l["peak"]), "late_risk": sum(1 for l in legs if l.get("late_risk"))}
+
+
 def build_result(routes, vs, prob: Problem, cfg, pending, vehicles, meta) -> dict:
     orders = prob.orders
     out_routes = []
@@ -205,13 +244,16 @@ def build_result(routes, vs, prob: Problem, cfg, pending, vehicles, meta) -> dic
             continue
         v = vs[vi]
         ev = prob.evaluate(v, seq)
+        peak = peak_analysis(v, seq, prob, cfg)
         stops = []
-        for i, leg_km, t_s, wait_s in ev["stops"]:
+        for k, (i, leg_km, t_s, wait_s) in enumerate(ev["stops"]):
             o = orders[i]
             has_tw = o["tw_start"] is not None or o["tw_end"] is not None
             stops.append({"order_id": o["order_id"], "latitude": o["latitude"], "longitude": o["longitude"], "leg_km": rnd(leg_km, 3),
                           "arrival": fmt_time(t_s / 60), "wait_min": rnd(wait_s / 60, 1),
-                          "window": f'{fmt_time(o["tw_start"])}–{fmt_time(o["tw_end"])}' if has_tw else ""})
+                          "window": f'{fmt_time(o["tw_start"])}–{fmt_time(o["tw_end"])}' if has_tw else "",
+                          "peak": peak["legs"][k]["peak"], "peak_delay_min": peak["legs"][k]["delay_min"],
+                          "est_arrival_peak": fmt_time(peak["legs"][k]["est_arrival_min"]), "late_risk": peak["legs"][k]["late_risk"]})
         trip = compute_trip(ev["km"], v, cfg)
         out_routes.append({
             "vehicle_id": v["vehicle_id"], "vehicle_type": v["vehicle_type"], "fuel_blend_code": v["fuel_blend_code"],
@@ -221,6 +263,8 @@ def build_result(routes, vs, prob: Problem, cfg, pending, vehicles, meta) -> dic
             "load_volume_m3": rnd(ev["volume"], 3), "capacity_volume_m3": v.get("capacity_volume_m3"),
             "utilization_weight_pct": rnd(ev["weight"] / v["capacity_weight_kg"] * 100, 1),
             "operating_cost_vnd": round(ev["km"] * v["cost_per_km"] + v["fixed_cost_vnd"]),
+            "peak_legs": peak["peak_legs"], "peak_delay_min": peak["delay_min"], "late_risk": peak["late_risk"],
+            "return_peak": peak["legs"][-1]["peak"],
             **trip, "distance_km": rnd(ev["km"], 3),
         })
     unassigned = [{"order_id": orders[i]["order_id"], **unassigned_reason(orders[i], i, vehicles, prob)} for i in pending]
@@ -255,6 +299,9 @@ def summarize(routes: list[dict], n_orders: int, n_unassigned: int) -> dict:
         "co2_per_km": rnd(co2 / km, 4) if co2 is not None and km else None,
         "co2_per_order": rnd(co2 / assigned, 4) if co2 is not None and assigned else None,
         "cost_per_order_vnd": round((op + energy) / assigned) if energy is not None and assigned else None,
+        "peak_legs": sum(r.get("peak_legs", 0) for r in routes),
+        "peak_delay_min": rnd(sum(r.get("peak_delay_min", 0) for r in routes), 1),
+        "late_risk": sum(r.get("late_risk", 0) for r in routes),
         "warnings": warnings,
     }
 

@@ -116,8 +116,42 @@ with sync_playwright() as p:
     page.wait_for_timeout(3000)
     page.screenshot(path=OUT / "7_live.png", full_page=True)
     page.click("#menu [data-page=overview]")
-    page.wait_for_timeout(2000)
+    page.wait_for_selector("#ch-cost", timeout=15000)
+    page.wait_for_timeout(2500)
     page.screenshot(path=OUT / "8_overview_dispatcher.png", full_page=True)
+    print("charts drawn:", page.evaluate("Object.keys(charts).length"))
+
+    # Order and vehicle detail drawers.
+    page.click("#menu [data-page=orders]")
+    page.wait_for_timeout(800)
+    page.click("#orders-table a.oid")
+    page.wait_for_selector("#drawer:not([hidden]) .dsec")
+    page.wait_for_timeout(1200)
+    page.screenshot(path=OUT / "10_order_drawer.png")
+    page.click("#drawer a.oid[data-vehicle]")
+    page.wait_for_timeout(1500)
+    page.screenshot(path=OUT / "11_vehicle_drawer.png")
+    page.keyboard.press("Escape")
+
+    # AI assistant panel (no API key locally → "not configured" message).
+    page.click("#ai-fab")
+    page.wait_for_timeout(800)
+    page.click("#ai-msgs [data-ask]")
+    page.wait_for_timeout(1500)
+    page.screenshot(path=OUT / "12_ai_panel.png")
+    page.click("#ai-close")
+
+    # English UI.
+    page.click(".lang-switch [data-lang=en]")
+    page.click("#menu [data-page=plan]")
+    page.wait_for_timeout(1500)
+    page.screenshot(path=OUT / "13_plan_en.png")
+    page.click("#menu [data-page=overview]")
+    page.wait_for_timeout(2500)
+    page.screenshot(path=OUT / "14_overview_en.png", full_page=True)
+    page.click(".lang-switch [data-lang=vi]")
+    page.wait_for_timeout(500)
+    print("back to VI:", page.inner_text("#page-title"))
 
     # ---- Mobile staff layout ----
     m = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, locale="vi-VN").new_page(); watch(m, "mobile-staff")

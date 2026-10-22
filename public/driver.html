@@ -15,6 +15,9 @@
     .d-bar h1 { font-size: 17px; flex: 1; }
     .d-bar .sub { color: #a7c7b2; font-size: 12px; margin-top: 2px; }
     .d-bar button { background: rgba(255,255,255,.1); color: #fff; padding: 6px 10px; font-size: 13px; }
+    .d-bar .lang-seg { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
+    .d-bar .lang-seg button { background: transparent; color: #cfe3d6; padding: 3px 8px; }
+    .d-bar .lang-seg button.active { background: #fff; color: #0f2a1c; }
     .d-bar .progress { margin-top: 10px; background: rgba(255,255,255,.15); }
     .share { margin: 12px 16px 0; border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; }
     .share.off { background: var(--surface); border: 1px dashed var(--brand); }
@@ -63,7 +66,7 @@
 
   <div class="d-app">
     <div class="d-bar">
-      <div class="row"><h1 id="d-title">🚚 Tuyến của tôi</h1><button id="btn-refresh" aria-label="Làm mới">↻</button><button id="btn-logout">Thoát</button></div>
+      <div class="row"><h1 id="d-title">🚚 Tuyến của tôi</h1><div class="lang-switch"></div><button id="btn-refresh" aria-label="Làm mới">↻</button><button id="btn-logout">Thoát</button></div>
       <div class="sub" id="d-sum"></div>
       <div class="progress" id="d-progress" hidden><span class="p-ok" id="p-ok"></span><span class="p-bad" id="p-bad"></span></div>
     </div>
@@ -76,6 +79,7 @@
   <div class="toasts" id="toasts"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="i18n.js"></script>
   <script src="auth.js"></script>
   <script src="driver.js"></script>
 </body>

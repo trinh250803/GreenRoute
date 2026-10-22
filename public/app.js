@@ -130,9 +130,9 @@ async function loadOverview() {
   if (lost.length) alerts.push(['warn', `<b>Mất tín hiệu:</b> ${lost.map(v => `${esc(v.vehicle_id)} (${ago(v.age_s)})`).join(', ')}.`, 'live']);
   if (counts.failed) alerts.push(['err', `<b>${counts.failed} đơn giao thất bại</b> — cần xử lý lại.`, 'live']);
   if (latest && !published) alerts.push(['info', 'Phương án mới nhất <b>chưa phát hành</b> — tài xế chưa nhận được tuyến.', 'plan']);
-  if (CFG.illustrative) alerts.push(['info', 'Hệ số phát thải và giá đang là <b>dữ liệu minh họa</b>, cần nghiệp vụ duyệt.', can('admin') ? 'admin' : 'method']);
   $('#ov-alerts').innerHTML = alerts.length ? alerts.map(([k, h, g]) => `<div class="alert ${k}" style="align-items:center"><div style="flex:1">${h}</div>${g ? `<button class="sm secondary" data-go="${g}">Xem</button>` : ''}</div>`).join('')
     : alertBox('ok', '✓ Không có cảnh báo.');
+  loadAnalytics().catch(e => toast(e.message, 'err'));
 }
 
 function progressRow(v) {
@@ -141,7 +141,7 @@ function progressRow(v) {
   return `<div class="item clickable" data-focus="${esc(v.vehicle_id)}">
     <div class="top"><span class="dot" style="background:${colorFor(v.vehicle_id)}"></span><span class="id">${esc(v.vehicle_id)}</span>
       <span class="muted">${v.driver ? esc(v.driver.full_name) : '<span class="bad">chưa gán tài xế</span>'}</span>
-      <span style="margin-left:auto">${signalBadge(v)}</span></div>
+      <span style="margin-left:auto">${signalBadge(v)}</span><a href="#" class="oid" data-vehicle="${esc(v.vehicle_id)}" style="font-size:12px">Chi tiết</a></div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div class="progress" style="flex:1"><span class="p-ok" style="width:${pctOk}%"></span><span class="p-bad" style="width:${pctBad}%"></span></div><small class="muted">${v.done}/${v.total}</small></div>
     ${v.next_stop ? `<div class="meta"><span>➡ Tiếp: <b>${esc(v.next_stop.order_id)}</b> (dự kiến ${esc(v.next_stop.arrival)})</span>${v.next_stop.distance_km != null ? `<span>cách ${fmt(v.next_stop.distance_km, 1)} km</span>` : ''}${v.trail_km ? `<span>đã đi ${fmt(v.trail_km, 1)} km</span>` : ''}</div>` : v.total ? '<div class="meta good">✓ Hoàn thành tuyến</div>' : ''}
   </div>`;
@@ -181,10 +181,13 @@ function drawPlanMap(run) {
     const pts = [[d.latitude, d.longitude], ...r.stops.map(s => [s.latitude, s.longitude]), [d.latitude, d.longitude]];
     L.polyline(pts, { color: c, weight: 4, opacity: .85, dashArray: r.fuel_blend_code === 'electricity' ? '8 6' : null })
       .bindTooltip(`${esc(r.vehicle_id)} · ${r.distance_km} km`, { sticky: true }).addTo(planLayers);
+    const peakStyle = { color: '#d03b3b', weight: 3, dashArray: '2 7', opacity: .95 };
+    r.stops.forEach((s, k) => { if (s.peak) L.polyline([pts[k], pts[k + 1]], peakStyle).bindTooltip(`🚦 ${esc(r.vehicle_id)} → ${esc(s.order_id)}: +${s.peak_delay_min}′ (ước tính)`, { sticky: true }).addTo(planLayers); });
+    if (r.return_peak) L.polyline(pts.slice(-2), peakStyle).addTo(planLayers);
     r.stops.forEach((s, k) => {
       assigned.add(s.order_id); bounds.push([s.latitude, s.longitude]);
       L.marker([s.latitude, s.longitude], { icon: stopIcon(k + 1, c) })
-        .bindPopup(`<b>${esc(s.order_id)}</b><br>Xe ${esc(r.vehicle_id)} · điểm ${k + 1}<br>Dự kiến ${s.arrival}${s.window ? `<br>Khung giờ ${s.window}` : ''}`).addTo(planLayers);
+        .bindPopup(`<a href="#" class="oid" data-order="${esc(s.order_id)}">${esc(s.order_id)}</a><br>Xe <a href="#" class="oid" data-vehicle="${esc(r.vehicle_id)}">${esc(r.vehicle_id)}</a> · điểm ${k + 1}<br>Dự kiến ${s.arrival}${s.window ? `<br>Khung giờ ${s.window}` : ''}`).addTo(planLayers);
     });
   });
   run.input.orders.filter(o => !assigned.has(o.order_id)).forEach(o => {
@@ -214,16 +217,17 @@ function renderRun(run) {
     ['💰 Tổng chi phí', `${fmt(t.total_cost_vnd)} ₫`, `${fmt(t.cost_per_order_vnd)} ₫/đơn · ${deltaHtml(cmp.cost_per_order_vnd)}`, '--amber'],
     ['🌿 CO₂ trực tiếp', `${fmt(t.co2_direct_kg, 2)} kg`, `${fmt((t.co2_per_order ?? 0) * 1000)} g/đơn · ${deltaHtml(cmp.co2_per_order)}`, '--brand'],
     ['⚡ CO₂ gián tiếp (điện)', `${fmt(t.co2_grid_indirect_kg, 2)} kg`, 'báo cáo riêng, không cộng', '--muted'],
+    ['🚦 Giờ cao điểm', `${t.peak_legs ?? 0} chặng`, `+${fmt(t.peak_delay_min)}′ ước tính · ${t.late_risk ?? 0} đơn nguy cơ trễ`, '--red'],
   ].map(([l, v, d, c]) => `<div class="kpi" style="--accent:var(${c})"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
 
   $('#plan-v-routes').innerHTML = run.optimized.routes.map(r => {
     const c = colorFor(r.vehicle_id), vt = CFG.vehicle_types[r.vehicle_type]?.label || r.vehicle_type;
-    return `<div class="item"><div class="top"><span class="dot" style="background:${c}"></span><span class="id">${esc(r.vehicle_id)}</span>
+    return `<div class="item"><div class="top"><span class="dot" style="background:${c}"></span><a href="#" class="oid id" data-vehicle="${esc(r.vehicle_id)}">${esc(r.vehicle_id)}</a>
         <span class="badge">${esc(vt)}</span><span class="badge ${r.fuel_blend_code === 'electricity' ? 'info' : ''}">${esc(CFG.fuels[r.fuel_blend_code]?.label || r.fuel_blend_code)}</span>
         <span style="margin-left:auto" class="muted">${r.start}–${r.end}</span></div>
-      <div class="meta"><span>📍 ${r.stops.length} điểm</span><span>🛣 ${fmt(r.distance_km, 1)} km</span><span>💰 ${fmt(r.operating_cost_vnd + (r.energy_cost_vnd ?? 0))} ₫</span><span>🌿 ${fmt(r.co2_direct_kg, 2)} kg</span></div>
+      <div class="meta"><span>📍 ${r.stops.length} điểm</span><span>🛣 ${fmt(r.distance_km, 1)} km</span><span>💰 ${fmt(r.operating_cost_vnd + (r.energy_cost_vnd ?? 0))} ₫</span><span>🌿 ${fmt(r.co2_direct_kg, 2)} kg</span>${r.peak_legs ? `<span>🚦 ${r.peak_legs} chặng giờ cao điểm · +${fmt(r.peak_delay_min)}′</span>` : ''}${r.late_risk ? `<span class="bad">⚠ ${r.late_risk} nguy cơ trễ</span>` : ''}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><div class="progress" style="flex:1"><span class="p-ok" style="width:${Math.min(r.utilization_weight_pct, 100)}%;background:${c}"></span></div><small class="muted">tải ${r.load_weight_kg}/${r.capacity_weight_kg} kg</small></div>
-      <details><summary>Thứ tự giao &amp; hệ số phát thải</summary><ol class="stops">${r.stops.map((s, i) => `<li><span class="i">${i + 1}.</span><b>${esc(s.order_id)}</b><span class="muted">${s.arrival}${s.window ? ` · khung ${s.window}` : ''}${s.wait_min ? ` · chờ ${s.wait_min}′` : ''}</span></li>`).join('')}</ol>
+      <details><summary>Thứ tự giao &amp; hệ số phát thải</summary><ol class="stops">${r.stops.map((s, i) => `<li><span class="i">${i + 1}.</span><a href="#" class="oid" data-order="${esc(s.order_id)}">${esc(s.order_id)}</a><span class="muted">${s.arrival}${s.window ? ` · khung ${s.window}` : ''}${s.wait_min ? ` · chờ ${s.wait_min}′` : ''}</span>${s.peak ? ` <span title="giờ cao điểm +${s.peak_delay_min}′">🚦</span>` : ''}${s.late_risk ? ' <span class="badge bad">nguy cơ trễ</span>' : ''}</li>`).join('')}</ol>
       <p class="hint" style="margin:8px 0 0">${r.factor ? `Hệ số ${r.factor.value} ${esc(r.factor.unit)} — ${esc(r.factor.source)} (${r.factor.year ?? '?'})${r.factor.official ? '' : ' <span class="badge sim">mô phỏng</span>'}` : 'Không có hệ số'}</p></details></div>`;
   }).join('');
 
@@ -236,7 +240,7 @@ function renderRun(run) {
   const un = run.optimized.unassigned;
   $('#un-count').textContent = un.length ? `(${un.length})` : '';
   $('#plan-v-unassigned').innerHTML = un.length ? `<div class="tbl-wrap"><table><thead><tr><th>Đơn</th><th>Lý do</th></tr></thead><tbody>${
-    un.map(u => `<tr><td><b>${esc(u.order_id)}</b><br><code>${u.code}</code></td><td>${esc(u.message)}</td></tr>`).join('')}</tbody></table></div>` : alertBox('ok', '✓ Tất cả đơn đã được phân công.');
+    un.map(u => `<tr><td><a href="#" class="oid" data-order="${esc(u.order_id)}">${esc(u.order_id)}</a><br><code>${u.code}</code></td><td>${esc(u.message)}</td></tr>`).join('')}</tbody></table></div>` : alertBox('ok', '✓ Tất cả đơn đã được phân công.');
 
   const warns = [...(t.warnings || [])];
   if (run.assumptions.routing_fallback) warns.unshift(run.assumptions.routing_fallback);
@@ -318,7 +322,7 @@ async function loadLive() {
   live.vehicles.forEach(v => {
     const c = colorFor(v.vehicle_id);
     if (v.stops.length && live.depot) L.polyline([[live.depot.latitude, live.depot.longitude], ...v.stops.map(s => [s.latitude, s.longitude])], { color: c, weight: 2, opacity: .35, dashArray: '4 6' }).addTo(liveLayers);
-    v.stops.forEach((s, i) => { bounds.push([s.latitude, s.longitude]); L.marker([s.latitude, s.longitude], { icon: stopIcon(i + 1, c, s.status) }).bindPopup(`<b>${esc(s.order_id)}</b> · ${STATUS_LABEL[s.status]}<br>Xe ${esc(v.vehicle_id)} · dự kiến ${s.arrival}`).addTo(liveLayers); });
+    v.stops.forEach((s, i) => { bounds.push([s.latitude, s.longitude]); L.marker([s.latitude, s.longitude], { icon: stopIcon(i + 1, c, s.status) }).bindPopup(`<a href="#" class="oid" data-order="${esc(s.order_id)}">${esc(s.order_id)}</a> · ${STATUS_LABEL[s.status]}<br>Xe ${esc(v.vehicle_id)} · dự kiến ${s.arrival}`).addTo(liveLayers); });
     if (v.trail.length > 1) L.polyline(v.trail, { color: c, weight: 5, opacity: .9 }).addTo(liveLayers);
     if (v.last) {
       bounds.push([v.last.lat, v.last.lng]);
@@ -355,8 +359,8 @@ function renderDispatch(b) {
   if (!b) { $('#dispatch').innerHTML = empty('📭', 'Chưa có phương án nào được phát hành.'); return; }
   $('#dispatch').innerHTML = `<p class="hint" style="margin-top:0">Phát hành bởi <b>${esc(b.published_by)}</b> lúc ${new Date(b.published_at).toLocaleString('vi-VN')} · ${b.counts.delivered} đã giao · ${b.counts.failed} thất bại · ${b.counts.pending} còn lại</p>
     <div class="tbl-wrap"><table><thead><tr><th>Xe</th><th>#</th><th>Đơn</th><th>Dự kiến</th><th>Khung giờ</th><th>Trạng thái</th><th>Thực tế</th><th>Xác nhận vị trí</th><th>Lý do / ghi chú</th></tr></thead><tbody>${
-      b.routes.flatMap(r => r.stops.map((s, i) => `<tr><td>${i === 0 ? `<span class="dot" style="background:${colorFor(r.vehicle_id)}"></span> <b>${esc(r.vehicle_id)}</b><br><small class="muted">${r.driver ? esc(r.driver.full_name) : 'chưa gán'}</small>` : ''}</td>
-        <td>${i + 1}</td><td>${esc(s.order_id)}</td><td>${s.arrival}</td><td>${esc(s.window)}</td>
+      b.routes.flatMap(r => r.stops.map((s, i) => `<tr><td>${i === 0 ? `<a href="#" class="oid" data-vehicle="${esc(r.vehicle_id)}"><span class="dot" style="background:${colorFor(r.vehicle_id)}"></span> ${esc(r.vehicle_id)}</a><br><small class="muted">${r.driver ? esc(r.driver.full_name) : 'chưa gán'}</small>` : ''}</td>
+        <td>${i + 1}</td><td><a href="#" class="oid" data-order="${esc(s.order_id)}">${esc(s.order_id)}</a></td><td>${s.arrival}</td><td>${esc(s.window)}</td>
         <td><span class="badge ${s.status}">${STATUS_LABEL[s.status]}</span>${s.on_time === false ? ' <span class="badge bad">trễ</span>' : ''}</td>
         <td>${esc(s.actual_time || '')}</td><td>${locationCell(s)}</td><td>${esc(s.reason_label || '')} ${esc(s.note || '')}</td></tr>`)).join('')
     }</tbody></table></div>`;
@@ -382,7 +386,7 @@ function renderOrders() {
   const rows = q ? ORDERS.filter(o => [o.order_id, o.customer_name, o.address, o.phone, o.note].some(x => String(x || '').toLowerCase().includes(q))) : ORDERS;
   $('#orders-count').textContent = `Đơn hàng (${rows.length}${q ? `/${ORDERS.length}` : ''})`;
   $('#orders-table').innerHTML = rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Địa chỉ</th><th class="num">kg</th><th class="num">m³</th><th>Khung giờ</th><th class="num">Dừng</th><th>Ghi chú</th><th></th></tr></thead><tbody>${
-    rows.map(o => `<tr><td><b>${esc(o.order_id)}</b>${o.priority ? ' <span class="badge warn">ưu tiên</span>' : ''}</td><td>${esc(o.customer_name)}<br><small class="muted">${esc(o.phone)}</small></td>
+    rows.map(o => `<tr><td><a href="#" class="oid" data-order="${esc(o.order_id)}">${esc(o.order_id)}</a>${o.priority ? ' <span class="badge warn">ưu tiên</span>' : ''}</td><td>${esc(o.customer_name)}<br><small class="muted">${esc(o.phone)}</small></td>
       <td>${esc(o.address)}<br><small class="muted">${o.latitude}, ${o.longitude}</small></td><td class="num">${o.weight_kg}</td><td class="num">${o.volume_m3}</td>
       <td>${o.tw_start != null || o.tw_end != null ? `${t2(o.tw_start)}–${t2(o.tw_end)}` : '<span class="muted">cả ngày</span>'}</td><td class="num">${o.service_time_min}′</td><td><small>${esc(o.note)}</small></td>
       <td>${can('admin', 'dispatcher') ? `<button class="danger sm" data-del-order="${esc(o.order_id)}">Xóa</button>` : ''}</td></tr>`).join('')
@@ -417,11 +421,11 @@ async function loadVehicles() {
   const { body: vs } = await api('/api/vehicles');
   $('#vehicles-count').textContent = `Đội xe (${vs.length} xe · ${vs.filter(v => v.available).length} sẵn sàng)`;
   $('#vehicles-table').innerHTML = vs.length ? `<div class="tbl-wrap"><table><thead><tr><th>Xe</th><th>Tài xế</th><th>Nhiên liệu</th><th class="num">Tải trọng</th><th class="num">Thể tích</th><th class="num">VND/km</th><th class="num">Cố định</th><th class="num">Tiêu hao</th><th class="num">Giá NL</th><th>Ca</th><th>Trạng thái</th><th></th></tr></thead><tbody>${
-    vs.map(v => { const fu = CFG.fuels[v.fuel_blend_code]; return `<tr><td><span class="dot" style="background:${colorFor(v.vehicle_id)}"></span> <b>${esc(v.vehicle_id)}</b><br><small class="muted">${esc(CFG.vehicle_types[v.vehicle_type]?.label)}</small></td>
+    vs.map(v => { const fu = CFG.fuels[v.fuel_blend_code]; return `<tr><td><a href="#" class="oid" data-vehicle="${esc(v.vehicle_id)}"><span class="dot" style="background:${colorFor(v.vehicle_id)}"></span> ${esc(v.vehicle_id)}</a><br><small class="muted">${esc(CFG.vehicle_types[v.vehicle_type]?.label)}</small></td>
       <td>${v.driver ? esc(v.driver) : '<span class="badge warn">chưa gán</span>'}</td>
       <td>${esc(fu?.label)} ${fu && !fu.official ? '<span class="badge sim">mô phỏng</span>' : ''}</td><td class="num">${v.capacity_weight_kg} kg</td><td class="num">${v.capacity_volume_m3 ?? '—'} m³</td>
       <td class="num">${fmt(v.cost_per_km)}</td><td class="num">${fmt(v.fixed_cost_vnd)}</td><td class="num">${v.consumption_rate ?? '<span class="badge warn">thiếu</span>'} ${fu?.kind === 'electric' ? 'kWh' : 'L'}</td>
-      <td class="num">${fmt(v.fuel_price ?? fu?.price_vnd)}${v.fuel_price == null ? '<br><small class="muted">mặc định</small>' : ''}</td><td>${t2(v.start_time)}–${t2(v.end_time)}</td>
+      <td class="num" title="${esc(v.fuel_price == null ? fu?.price_source || '' : 'Giá nhập riêng cho xe')}">${fmt(v.fuel_price ?? fu?.price_vnd)}${v.fuel_price == null ? `<br><small class="muted">mặc định${fu?.price_date ? ` · ${fu.price_date.split('-').reverse().join('/')}` : ''}</small>` : ''}</td><td>${t2(v.start_time)}–${t2(v.end_time)}</td>
       <td>${v.available ? '<span class="badge ok">sẵn sàng</span>' : '<span class="badge bad">nghỉ</span>'}</td>
       <td>${can('admin', 'fleet_manager') ? `<button class="danger sm" data-del-veh="${esc(v.vehicle_id)}">Xóa</button>` : ''}</td></tr>`; }).join('')
   }</tbody></table></div>` : empty('🚚', 'Chưa có xe nào.');
@@ -569,8 +573,9 @@ function renderConfigEditor() {
       Object.entries(CFG.base_factors).map(([k, f]) => `<tr><td><b>${k}</b></td><td>${input(`base_factors.${k}.value`, f.value)}</td><td>${esc(f.unit)}</td>
         <td>${input(`base_factors.${k}.source`, f.source, 'text', 340)}</td><td>${input(`base_factors.${k}.year`, f.year, 'number', 80)}</td><td>${input(`base_factors.${k}.geography`, f.geography, 'text', 130)}</td></tr>`).join('')}</tbody></table></div>
     <h3 style="margin:18px 0 10px">Nhiên liệu: giá mặc định &amp; trạng thái</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>Mã</th><th>Tên</th><th>Giá mặc định</th><th>Tỷ lệ ethanol (0–1)</th><th>Trạng thái</th><th>Chính thức</th></tr></thead><tbody>${
+    <div class="tbl-wrap"><table><thead><tr><th>Mã</th><th>Tên</th><th>Giá mặc định</th><th>Nguồn giá</th><th>Ngày áp dụng</th><th>Tỷ lệ ethanol (0–1)</th><th>Trạng thái</th><th>Chính thức</th></tr></thead><tbody>${
       Object.entries(CFG.fuels).map(([k, f]) => `<tr><td><b>${k}</b></td><td>${esc(f.label)}</td><td>${input(`fuels.${k}.price_vnd`, f.price_vnd)} <small class="muted">${esc(f.price_unit)}</small></td>
+        <td>${input(`fuels.${k}.price_source`, f.price_source, 'text', 240)}</td><td>${input(`fuels.${k}.price_date`, f.price_date, 'text', 110)}</td>
         <td>${f.ethanol_share_volume != null ? input(`fuels.${k}.ethanol_share_volume`, f.ethanol_share_volume, 'number', 80) : '—'}</td>
         <td><select data-path="fuels.${k}.status" data-orig="${f.status}">${['supported', 'simulation', 'unverified'].map(s => `<option ${s === f.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
         <td>${boolSel(`fuels.${k}.official`, f.official)}</td></tr>`).join('')}</tbody></table></div>
@@ -584,6 +589,7 @@ function renderConfigEditor() {
         <tr><td>Hệ số đường vòng (khi không có OSRM)</td><td>${input('routing.detour_factor', CFG.routing.detour_factor)}</td></tr>
         <tr><td>Ngưỡng xác nhận vị trí giao (m)</td><td>${input('delivery_check.max_distance_m', dc.max_distance_m ?? 300)}</td></tr>
         <tr><td>Chu kỳ gửi vị trí tài xế (giây)</td><td>${input('tracking.ping_interval_s', tr.ping_interval_s ?? 20)}</td></tr>
+        <tr><td>Tốc độ giờ cao điểm (0–1 × tốc độ thường)</td><td>${input('traffic.peak_speed_factor', CFG.traffic?.peak_speed_factor ?? 0.6)}</td></tr>
         <tr><td>Coi là mất tín hiệu sau (giây)</td><td>${input('tracking.stale_after_s', tr.stale_after_s ?? 300)}</td></tr>
         <tr><td>Gắn nhãn “Dữ liệu minh họa”</td><td>${boolSel('illustrative', CFG.illustrative)}</td></tr>
       </tbody></table></div></div>
@@ -634,6 +640,8 @@ function renderMethod() {
       <li>Hàm mục tiêu OR-Tools = chi phí + giá CO₂ quy đổi × kg CO₂ trực tiếp (+ chi phí thời gian nếu cấu hình).</li></ul>
     <h3>Hệ số nền</h3><div class="tbl-wrap"><table><thead><tr><th>Khóa</th><th>Giá trị</th><th>Nguồn</th><th>Năm</th></tr></thead><tbody>${
       Object.entries(b).map(([k, f]) => `<tr><td>${k}</td><td>${f.value} ${esc(f.unit)}</td><td>${esc(f.source)}</td><td>${f.year}</td></tr>`).join('')}</tbody></table></div>
+    <h3>Giá nhiên liệu</h3><div class="tbl-wrap"><table><thead><tr><th>Mã</th><th>Tên</th><th class="num">Giá</th><th>Nguồn giá</th><th>Ngày áp dụng</th></tr></thead><tbody>${
+      Object.entries(CFG.fuels).map(([k, f]) => `<tr><td>${k}</td><td>${esc(f.label)}</td><td class="num">${f.price_vnd == null ? '<span class="badge warn">chưa có giá</span>' : `${fmt(f.price_vnd)} ${esc(f.price_unit)}`}</td><td><small>${esc(f.price_source || '')}</small></td><td>${esc(f.price_date || '—')}</td></tr>`).join('')}</tbody></table></div>
     <h3>Định tuyến &amp; baseline</h3><p>Khoảng cách ước tính = đường chim bay × ${CFG.routing.detour_factor} (đặt <code>OSRM_URL</code> để dùng đường thực). Baseline: lấy đơn theo thứ tự gốc, xếp vào xe đầu tiên còn chỗ (first-fit), không sắp xếp lại.</p>
     <h3>Theo dõi vị trí</h3><p>Tài xế chủ động bấm <b>Bắt đầu ca</b> mới chia sẻ vị trí; điện thoại gửi mỗi ${CFG.tracking?.ping_interval_s ?? 20} giây khi trang tài xế đang mở. Trình duyệt không cho theo dõi khi tắt màn hình/đóng trang — cần app di động nếu muốn theo dõi nền.</p>
     <h3>AI / ML</h3><p>Chưa có mô hình huấn luyện trên dữ liệu thật. Dữ liệu giao hàng thực tế (giờ đến, đúng/trễ, lý do thất bại, vệt GPS) đang được thu thập để làm nhãn cho giai đoạn ML.</p>`;
@@ -646,8 +654,8 @@ function applyDefaults() {
   $('#time-limit').value = dw.time_limit_s ?? 5;
 }
 function updateBanner() {
-  $('#banner').hidden = !CFG.illustrative;
-  $('#banner').innerHTML = `⚠ ${esc(CFG.illustrative_note)} Phạm vi: CO₂ trực tiếp từ nhiên liệu vận hành.`;
+  // Global banner removed at the owner's request; scope and illustrative labels remain on results and the Method page.
+  $('#banner').hidden = true;
 }
 async function refreshDepot() {
   const { body: d } = await api('/api/depot');

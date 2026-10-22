@@ -45,6 +45,7 @@
         <button id="menu-toggle" class="secondary sm" aria-label="Menu">☰</button>
         <div><h1 id="page-title"></h1><div class="sub" id="page-sub"></div></div>
         <div class="actions" id="page-actions"></div>
+        <div class="lang-switch"></div>
       </header>
       <div id="banner" class="alert warn banner" hidden></div>
 
@@ -60,6 +61,7 @@
             <div class="card"><div class="card-h"><h3>Tiến độ theo xe</h3><div class="right"><button class="secondary sm" data-go="live">Xem bản đồ trực tiếp →</button></div></div><div id="ov-progress"></div></div>
             <div class="card"><div class="card-h"><h3>Cần chú ý</h3></div><div id="ov-alerts" class="list"></div></div>
           </div>
+          <div id="ov-analytics" style="display:flex;flex-direction:column;gap:16px"></div>
         </section>
 
         <!-- ===== Plan ===== -->
@@ -87,7 +89,7 @@
           <div id="plan-body" hidden style="display:flex;flex-direction:column;gap:16px">
             <div class="kpis" id="kpis"></div>
             <div class="grid map-side">
-              <div class="card"><div class="card-h"><h3>Bản đồ tuyến</h3><span class="right hint">Nét đứt = xe điện · Chấm đỏ = chưa phân công</span></div><div id="map" class="map"></div></div>
+              <div class="card"><div class="card-h"><h3>Bản đồ tuyến</h3><span class="right hint">Nét đứt = xe điện · Chấm đỏ = chưa phân công · <span style="color:#b45309;font-weight:700">▬ ▬</span> Nét đỏ đứt = chặng đi giờ cao điểm (ước tính)</span></div><div id="map" class="map"></div></div>
               <div class="card">
                 <div class="card-h"><div class="seg" id="plan-seg"><button class="active" data-v="routes">Tuyến theo xe</button><button data-v="compare">So sánh baseline</button><button data-v="unassigned">Chưa phân công <span id="un-count"></span></button></div></div>
                 <div id="plan-v-routes" class="list" style="max-height:520px;overflow:auto"></div>
@@ -243,10 +245,28 @@
       </div>
     </div>
   </div>
+  <!-- Order / vehicle detail drawer -->
+  <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+  <aside id="drawer" class="drawer" hidden aria-modal="true" role="dialog">
+    <div class="drawer-h"><h3 id="drawer-title"></h3><button id="drawer-close" class="secondary sm" aria-label="Đóng">✕</button></div>
+    <div id="drawer-body"></div>
+  </aside>
+
+  <!-- AI assistant -->
+  <button id="ai-fab" class="ai-fab">✨ Trợ lý AI</button>
+  <section id="ai-panel" class="ai-panel" hidden>
+    <div class="ai-h"><b>✨ Trợ lý AI</b><span class="grow"></span><button id="ai-clear" class="ghost sm">Xóa hội thoại</button><button id="ai-close" class="ghost sm" aria-label="Đóng">✕</button></div>
+    <div id="ai-msgs" class="ai-msgs"></div>
+    <form id="ai-form" class="ai-form"><input id="ai-input" placeholder="Hỏi về phương án, đơn hàng, chi phí, CO₂…" autocomplete="off"><button id="ai-send">Gửi</button></form>
+  </section>
+
   <div class="toasts" id="toasts"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="i18n.js"></script>
   <script src="auth.js"></script>
   <script src="app.js"></script>
+  <script src="insights.js"></script>
 </body>
 </html>

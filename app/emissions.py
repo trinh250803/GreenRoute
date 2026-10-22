@@ -105,7 +105,12 @@ def compute_trip(distance_km: float, vehicle: dict, cfg: dict) -> dict:
     out["energy_amount"] = rnd(amount, 4)
     out["energy_unit"] = "kWh" if fuel["kind"] == "electric" else "L"
     price = num(vehicle.get("fuel_price"))
-    out["energy_cost_vnd"] = round(amount * (price if price is not None else fuel["price_vnd"]))
+    if price is None:
+        price = num(fuel.get("price_vnd"))
+    if price is None:
+        warnings.append(f'Xe {vid}: chưa có giá {fuel["label"]} — không tính chi phí năng lượng')
+    else:
+        out["energy_cost_vnd"] = round(amount * price)
 
     f = resolve_factor(fuel_code, cfg, vehicle)
     warnings.extend(f"Xe {vid}: {w}" for w in f.get("warnings", []))

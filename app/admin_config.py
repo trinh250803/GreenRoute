@@ -15,6 +15,8 @@ from .emissions import active_config_path, load_fuel_config, num
 # Editable leaf paths. '*' matches any existing key at that level.
 EDITABLE = {
     r"fuels\.[^.]+\.price_vnd": "number",
+    r"fuels\.[^.]+\.price_source": "text",
+    r"fuels\.[^.]+\.price_date": "text",
     r"fuels\.[^.]+\.ethanol_share_volume": "share",
     r"fuels\.[^.]+\.status": ("supported", "simulation", "unverified"),
     r"fuels\.[^.]+\.official": "bool",
@@ -30,6 +32,7 @@ EDITABLE = {
     r"delivery_check\.max_distance_m": "positive",
     r"tracking\.ping_interval_s": "positive",
     r"tracking\.stale_after_s": "positive",
+    r"traffic\.peak_speed_factor": "share",
     r"illustrative": "bool",
     r"illustrative_note": "text",
 }

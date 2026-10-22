@@ -20,3 +20,6 @@ services:
         sync: false
       - key: SEED_ACCOUNTS_JSON
         sync: false
+      # Optional: enables the AI assistant.
+      - key: ANTHROPIC_API_KEY
+        sync: false
