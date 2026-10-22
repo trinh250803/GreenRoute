@@ -1,0 +1,51 @@
+﻿===================================================================================================================
+Bug 001 Màn hình Đơn hàng - Chức năng Thêm đơn đang báo cảnh báo bằng tiếng Việt thay vì đúng theo ngôn ngữ đã chọn
+===================================================================================================================
+
+Đây là ví dụ mẫu, nhưng lỗi có thật và tái hiện được.
+
+Loại                : Bug
+Mức độ              : Thấp (không sai số liệu, chỉ ảnh hưởng người dùng không đọc được tiếng Việt)
+Môi trường          : Local http://127.0.0.1:8000 — Chrome, máy tính 1440×900 (online cũng bị)
+Tài khoản / vai trò : dieuphoi01 (Điều phối)
+Ngôn ngữ giao diện  : 中文
+Ngày phát hiện      : 22/10/2026
+Người log           : IT
+Trạng thái          : Mới
+
+Description
+-----------
+
+Khi giao diện đang ở tiếng Trung (hoặc tiếng Anh), thêm một đơn hàng thiếu thể tích thì dòng tiêu đề "已保存 1 行" và "1 条警告" được dịch, nhưng nội dung cảnh báo bên dưới vẫn là tiếng Việt. Người dùng không biết tiếng Việt sẽ không hiểu đơn bị thiếu gì. Lỗi xảy ra với mọi thông báo kiểm tra dữ liệu do server trả về (thêm đơn, import đơn, import xe).
+
+Step
+----
+
+1. Đăng nhập web quản lý bằng tài khoản dieuphoi01.
+2. Bấm 中文 ở góc trên bên phải.
+3. Vào menu 订单 (Đơn hàng), mở 添加订单 (Thêm đơn hàng).[Ảnh: image/Bug001MànhìnhĐơnhàng-ChứcnăngThêmđơnđangbáocảnhbáobằngtiếngViệtthayvìđúngtheongônngữđãchọn/1792651218866.png]
+4. [Ảnh: image/Bug001MànhìnhĐơnhàng-ChứcnăngThêmđơnđangbáocảnhbáobằngtiếngViệtthayvìđúngtheongônngữđãchọn/1792651218866.png]
+4. Nhập 纬度 (Vĩ độ) = 10.80316, 经度 (Kinh độ) = 106.70768; để trống 体积 (m³) (Thể tích).
+5. Bấm nút lưu đơn.[Ảnh: image/Bug001MànhìnhĐơnhàng-ChứcnăngThêmđơnđangbáocảnhbáobằngtiếngViệtthayvìđúngtheongônngữđãchọn/1792651218866.png]
+
+Actual
+------
+
+[Ảnh: images/bug001_image1.png]
+
+1. Đơn được lưu, khung xanh báo "✓ 已保存 1 行（共 153 行）。" (đã dịch).
+2. Khung cam báo "1 条警告" (đã dịch).
+3. Nội dung cảnh báo hiện tiếng Việt: "Dòng 1 HCM153: thiếu volume_m3 — bỏ qua kiểm tra thể tích cho đơn này".
+
+Expected
+--------
+
+1. Đơn vẫn được lưu và vẫn có cảnh báo (đúng nghiệp vụ: thiếu thể tích thì bỏ qua kiểm tra thể tích, không chặn đơn).
+2. Nội dung cảnh báo hiển thị theo ngôn ngữ đang chọn, ví dụ 中文: "第 1 行 HCM153：缺少体积 (volume_m3) — 本单跳过体积检查"; EN: "Row 1 HCM153: missing volume_m3 — volume check skipped for this order".
+3. Tên trường kỹ thuật (volume_m3) được thay bằng tên hiển thị trên form (体积 / Volume / Thể tích).
+
+Ghi chú / căn cứ
+----------------
+
+- Yêu cầu đa ngôn ngữ VI / EN / 中文 được bổ sung ngày 22/10/2026.
+- Mã đơn (HCM153) và dữ liệu khách hàng giữ nguyên, không cần dịch.
