@@ -121,9 +121,26 @@ with sync_playwright() as p:
     page.screenshot(path=OUT / "8_overview_dispatcher.png", full_page=True)
     print("charts drawn:", page.evaluate("Object.keys(charts).length"))
 
-    # Order and vehicle detail drawers.
+    # Add an order through the address search.
     page.click("#menu [data-page=orders]")
     page.wait_for_timeout(800)
+    page.click("#order-add summary")
+    page.wait_for_timeout(600)
+    print("auto order id:", page.input_value("#of-id"))
+    page.fill("#of-address", "118 Bạch Đằng Bình Thạnh")
+    page.wait_for_selector("#addr-list li[data-i]", timeout=15000)
+    page.screenshot(path=OUT / "15_address_search.png")
+    page.click("#addr-list li[data-i]")
+    page.wait_for_timeout(1200)
+    print("filled:", {k: page.input_value(s) for k, s in [("lat", "#of-lat"), ("lng", "#of-lng"), ("from", "#of-ws"), ("to", "#of-we"), ("svc", "#of-svc")]})
+    page.fill("[name=customer_name]", "Khách thử nghiệm")
+    page.fill("[name=weight_kg]", "2.5")
+    page.screenshot(path=OUT / "16_order_form_filled.png")
+    page.click("#order-form button:not([type=button])")
+    page.wait_for_timeout(1500)
+    print("orders report:", page.inner_text("#orders-report")[:80])
+
+    # Order and vehicle detail drawers.
     page.click("#orders-table a.oid")
     page.wait_for_selector("#drawer:not([hidden]) .dsec")
     page.wait_for_timeout(1200)

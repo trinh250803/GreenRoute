@@ -15,6 +15,11 @@ services:
         value: ./data/db.json
       - key: ADMIN_USERNAME
         value: admin
+      # Keeps sign-ins valid across restarts (free tier wipes the disk).
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENV_BANNER
+        value: Môi trường thử nghiệm
       # Secrets: entered in the Render dashboard, never committed.
       - key: ADMIN_PASSWORD
         sync: false

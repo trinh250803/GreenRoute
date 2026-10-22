@@ -8,3 +8,4 @@ data/fuels_active.json
 TEST_ACCOUNTS.md
 render-secrets.local.txt
 e2e-shots/
+data/.session_secret

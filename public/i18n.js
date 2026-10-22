@@ -106,6 +106,13 @@ const I18N = (() => {
     'Làm sao giảm CO₂ mà không tăng nhiều chi phí?': 'How can we cut CO₂ without much extra cost?', 'Tóm tắt tình hình giao hàng hôm nay': "Summarise today's deliveries",
     'Đang suy nghĩ…': 'Thinking…', 'Xóa hội thoại': 'Clear chat',
     'Trợ lý chỉ dùng số liệu của phương án đang xem; không gửi tên, SĐT, địa chỉ khách.': 'The assistant only sees plan figures; customer names, phones and addresses are never sent.',
+    'Môi trường thử nghiệm': 'Test environment', 'Thêm đơn hàng': 'Add order', 'Địa chỉ giao — gõ để tìm, chọn trong danh sách': 'Delivery address — type to search, pick from the list',
+    'VD: 118 Bạch Đằng, Bình Thạnh': 'e.g. 118 Bạch Đằng, Bình Thạnh', 'Làm mới form': 'Reset form', 'Đang tìm…': 'Searching…',
+    'Bấm vào bản đồ hoặc kéo ghim để chỉnh vị trí — tọa độ và địa chỉ tự cập nhật.': 'Click the map or drag the pin to adjust — coordinates and address update automatically.',
+    'Không tìm thấy — thử bỏ số nhà, hoặc bấm vào bản đồ để chọn vị trí.': 'Nothing found — try without the house number, or click the map to pick the spot.',
+    'Địa chỉ cập nhật theo vị trí ghim — sửa lại số nhà nếu cần.': 'Address updated from the pin — fix the house number if needed.',
+    'Đơn mới: giao từ (HH:MM)': 'New orders: window from (HH:MM)', 'Đơn mới: giao đến (HH:MM)': 'New orders: window to (HH:MM)',
+    'Đơn mới: thời gian dừng (phút)': 'New orders: service time (min)',
     // Driver app
     'Tuyến của tôi': 'My route', 'Điểm tiếp theo': 'Next stop', '📞 Gọi khách': '📞 Call customer', '🧭 Chỉ đường': '🧭 Navigate', '✅ Đã giao': '✅ Delivered',
     '✖ Không giao được': '✖ Could not deliver', 'Xác nhận không giao được': 'Confirm failed delivery', '— Chọn lý do —': '— Choose a reason —',
@@ -136,6 +143,7 @@ const I18N = (() => {
   // when no whole-string entry matched, longest first.
   const FRAGMENTS = [
     ['Giờ cao điểm', 'Peak hours'], ['giờ cao điểm', 'peak hours'], ['Điểm tiếp theo', 'Next stop'],
+    ['Môi trường thử nghiệm', 'Test environment'], ['kiểm tra lại số nhà', 'check the house number'], ['Đã thêm đơn', 'Order added'],
     ['khác số đơn', 'different order count'], ['so với baseline', 'vs baseline'], ['đơn nguy cơ trễ', 'orders at late risk'], ['nguy cơ trễ', 'late risk'],
     ['ước tính', 'estimate'], ['Đã phát hành lúc', 'Published at'], ['Tài xế mở', 'Drivers open'], ['để nhận tuyến', 'to receive their route'],
     ['Phương án này đã phát hành lúc', 'This plan was published at'], ['chặng giờ cao điểm', 'peak-hour legs'], ['chặng', 'legs'], ['giờ xe chạy', 'vehicle-hours'],

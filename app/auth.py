@@ -1,12 +1,17 @@
 """Accounts, sessions and role-based access (mục 3.1, F-11, 12).
 
-Passwords: PBKDF2-SHA256 with per-user salt. Session tokens are random and stored only as
-SHA-256 hashes, so a leaked db file does not expose live sessions.
+Passwords: PBKDF2-SHA256 with per-user salt.
+Sessions: HMAC-signed tokens valid 24 h. They are stateless, so a server restart (which wipes
+the JSON store on the free host) does not log anyone out. Revocation still works: logout adds
+the token id to a deny list, and locking a user or resetting a password bumps the user's
+session_epoch, which invalidates every token issued before.
 """
+import base64
 import hashlib
 import hmac
 import logging
 import os
+import json
 import secrets
 import time
 from datetime import datetime, timezone
@@ -25,7 +30,7 @@ ROLES = {
     "driver": "Tài xế",
 }
 STAFF = ("admin", "dispatcher", "fleet_manager", "ops_manager")
-SESSION_TTL_S = 12 * 3600
+SESSION_TTL_S = 24 * 3600
 MAX_FAILED = 5
 LOCK_S = 5 * 60
 PBKDF2_ITER = 200_000
@@ -56,8 +61,52 @@ def verify_password(pw: str, stored: str) -> bool:
         return False
 
 
-def _token_hash(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
+_SECRET: bytes | None = None
+
+
+def _secret() -> bytes:
+    """SESSION_SECRET from the environment; otherwise a random secret persisted next to the db."""
+    global _SECRET
+    if _SECRET is None:
+        env = os.environ.get("SESSION_SECRET")
+        if env:
+            _SECRET = env.encode()
+        else:
+            p = store.db_path().parent / ".session_secret"
+            try:
+                _SECRET = p.read_bytes()
+            except FileNotFoundError:
+                p.parent.mkdir(parents=True, exist_ok=True)
+                _SECRET = secrets.token_hex(32).encode()
+                p.write_bytes(_SECRET)
+    return _SECRET
+
+
+def _b64(b: bytes) -> str:
+    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def _unb64(s: str) -> bytes:
+    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def issue_token(user: dict) -> tuple[str, dict]:
+    payload = {"u": user["username"], "e": user.get("session_epoch", 0), "jti": secrets.token_hex(8), "exp": int(time.time()) + SESSION_TTL_S}
+    body = _b64(json.dumps(payload, separators=(",", ":")).encode())
+    sig = _b64(hmac.new(_secret(), body.encode(), hashlib.sha256).digest())
+    return f"{body}.{sig}", payload
+
+
+def read_token(token: str) -> dict | None:
+    try:
+        body, sig = token.split(".")
+        good = _b64(hmac.new(_secret(), body.encode(), hashlib.sha256).digest())
+        if not hmac.compare_digest(sig, good):
+            return None
+        payload = json.loads(_unb64(body))
+    except (ValueError, json.JSONDecodeError):
+        return None
+    return payload if payload.get("exp", 0) > time.time() else None
 
 
 def public_user(u: dict) -> dict:
@@ -114,20 +163,20 @@ def login(username: str, password: str) -> dict:
         if not u["active"]:
             raise AuthError(403, "Tài khoản đã bị khóa")
         fails.pop(username, None)
-        token = secrets.token_urlsafe(32)
-        sessions = {k: s for k, s in db.setdefault("sessions", {}).items() if s["expires"] > time.time()}
-        sessions[_token_hash(token)] = {"username": username, "expires": time.time() + SESSION_TTL_S}
-        db["sessions"] = sessions
+        token, payload = issue_token(u)
         u["last_login_at"] = now_iso()
         audit(db, username, "login")
         store.save(db)
-        return {"token": token, "user": public_user(u)}
+        return {"token": token, "expires_at": payload["exp"], "user": public_user(u)}
 
 
-def logout(token: str) -> None:
+def logout(payload: dict) -> None:
     with store.lock:
         db = store.load()
-        db.get("sessions", {}).pop(_token_hash(token), None)
+        now = time.time()
+        revoked = {k: v for k, v in db.get("revoked_tokens", {}).items() if v > now}
+        revoked[payload["jti"]] = payload["exp"]
+        db["revoked_tokens"] = revoked
         store.save(db)
 
 
@@ -140,14 +189,16 @@ def current_user(request: Request) -> dict:
     token = _token(request)
     if not token:
         raise AuthError(401, "Chưa đăng nhập")
-    db = store.load()
-    s = db.get("sessions", {}).get(_token_hash(token))
-    if not s or s["expires"] < time.time():
+    payload = read_token(token)
+    if not payload:
         raise AuthError(401, "Phiên đăng nhập hết hạn")
-    u = next((x for x in db.get("users", []) if x["username"] == s["username"]), None)
-    if not u or not u["active"]:
-        raise AuthError(401, "Tài khoản không còn hiệu lực")
-    request.state.token = token
+    db = store.load()
+    if payload["jti"] in db.get("revoked_tokens", {}):
+        raise AuthError(401, "Phiên đăng nhập đã kết thúc")
+    u = next((x for x in db.get("users", []) if x["username"] == payload["u"]), None)
+    if not u or not u["active"] or u.get("session_epoch", 0) != payload.get("e", 0):
+        raise AuthError(401, "Tài khoản không còn hiệu lực hoặc mật khẩu đã đổi")
+    request.state.session = payload
     return u
 
 
@@ -164,7 +215,7 @@ def require(*roles: str):
     return dep
 
 
-def change_password(user: dict, old: str, new: str) -> None:
+def change_password(user: dict, old: str, new: str) -> dict:
     check_password_policy(new)
     with store.lock:
         db = store.load()
@@ -175,8 +226,12 @@ def change_password(user: dict, old: str, new: str) -> None:
             raise AuthError(400, "Mật khẩu mới phải khác mật khẩu cũ")
         u["password_hash"] = hash_password(new)
         u["must_change_password"] = False
+        # Sign out other devices, keep this one with a fresh token.
+        u["session_epoch"] = u.get("session_epoch", 0) + 1
         audit(db, u["username"], "change_password")
         store.save(db)
+        token, payload = issue_token(u)
+        return {"token": token, "expires_at": payload["exp"]}
 
 
 def create_user(actor: dict, data: dict) -> dict:
@@ -233,7 +288,7 @@ def update_user(actor: dict, username: str, data: dict) -> dict:
             u["password_hash"] = hash_password(data["password"])
             u["must_change_password"] = True
         if not active or data.get("password"):
-            db["sessions"] = {k: s for k, s in db.get("sessions", {}).items() if s["username"] != username}
+            u["session_epoch"] = u.get("session_epoch", 0) + 1  # signs the user out everywhere
         audit(db, actor["username"], "update_user", {"username": username, "before": {k: before[k] for k in ("role", "active", "vehicle_id")},
                                                    "after": {"role": role, "active": active, "vehicle_id": vehicle_id},
                                                    "password_reset": bool(data.get("password"))})

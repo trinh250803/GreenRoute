@@ -4,6 +4,7 @@
   --red: #dc2626; --red-soft: #fdecec; --amber: #b45309; --amber-soft: #fff4e0; --violet: #7c3aed;
   --radius: 12px; --shadow: 0 1px 2px rgba(16, 24, 20, .05), 0 4px 16px rgba(16, 24, 20, .05);
   --sidebar: 248px;
+  --envbar: 30px;  /* height of the environment banner; 0 in production */
 }
 * { box-sizing: border-box; }
 [hidden], [data-hidden-role] { display: none !important; }
@@ -34,7 +35,7 @@ label.check { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---------- App shell ---------- */
 .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
-.sidebar { background: #0f2a1c; color: #cfe3d6; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 18px 12px; gap: 6px; z-index: 1200; }
+.sidebar { background: #0f2a1c; color: #cfe3d6; position: sticky; top: var(--envbar); height: calc(100vh - var(--envbar)); display: flex; flex-direction: column; padding: 18px 12px; gap: 6px; z-index: 1200; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 16px; color: #fff; font-weight: 700; font-size: 17px; }
 .brand-logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #22c55e, #15803d); display: grid; place-items: center; }
 .brand small { display: block; color: #8fb59c; font-weight: 500; font-size: 11px; }
@@ -53,7 +54,7 @@ label.check { display: inline-flex; align-items: center; gap: 6px; }
 .usercard button { flex: 1; background: rgba(255, 255, 255, .07); color: #cfe3d6; font-size: 12px; justify-content: center; }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
-.topbar { position: sticky; top: 0; z-index: 1100; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px);
+.topbar { position: sticky; top: var(--envbar); z-index: 1100; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px);
   padding: 16px 28px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
 .topbar h1 { font-size: 20px; }
 .topbar .sub { color: var(--muted); font-size: 13px; }
@@ -178,7 +179,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .sub { display: none; flex-direction: column; gap: 16px; } .sub.active { display: flex; }
 
 /* ---------- Login ---------- */
-.login-screen { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 16px;
+.login-screen { position: fixed; inset: var(--envbar) 0 0 0; z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 16px;
   background: radial-gradient(1200px 600px at 10% 0%, #d9f2e2, transparent), radial-gradient(800px 500px at 100% 100%, #e3edff, transparent), var(--bg); }
 .login-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px rgba(16, 24, 20, .12); }
 .login-box h2 { display: flex; align-items: center; gap: 10px; font-size: 20px; }
@@ -195,7 +196,7 @@ a.oid { color: var(--blue); font-weight: 600; text-decoration: none; display: in
 a.oid:hover { text-decoration: underline; }
 tr.row-link { cursor: pointer; }
 .drawer-backdrop { position: fixed; inset: 0; background: rgba(15, 25, 20, .35); z-index: 4000; }
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); background: var(--surface); z-index: 4001; overflow-y: auto;
+.drawer { position: fixed; top: var(--envbar); right: 0; bottom: 0; width: min(520px, 100vw); background: var(--surface); z-index: 4001; overflow-y: auto;
   box-shadow: -12px 0 40px rgba(16, 24, 20, .18); padding: 0 20px 28px; animation: drawer .18s ease-out; }
 @keyframes drawer { from { transform: translateX(24px); opacity: 0; } }
 .drawer-h { position: sticky; top: 0; background: var(--surface); display: flex; align-items: center; gap: 10px; padding: 16px 0 12px; border-bottom: 1px solid var(--line); z-index: 2; }
@@ -228,3 +229,23 @@ tr.row-link { cursor: pointer; }
 .ai-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); }
 .ai-form input { flex: 1; }
 @media (max-width: 600px) { .ai-fab { right: 12px; bottom: 12px; } .ai-panel { right: 8px; bottom: 70px; } }
+
+/* ---------- Environment banner (above everything, including the menu) ---------- */
+body { padding-top: var(--envbar); }
+.env-banner { position: fixed; top: 0; left: 0; right: 0; height: var(--envbar); z-index: 9000; display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(-45deg, #b45309 0 14px, #c2410c 14px 28px); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .06em;
+  text-transform: uppercase; box-shadow: 0 1px 6px rgba(0, 0, 0, .25); }
+.env-banner[hidden] { display: none !important; }
+@media (max-width: 960px) { .sidebar { top: var(--envbar); height: calc(100vh - var(--envbar)); } }
+
+/* ---------- Order form with address search ---------- */
+.order-add { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr); gap: 16px; }
+@media (max-width: 1000px) { .order-add { grid-template-columns: 1fr; } #order-map { min-height: 280px; } }
+.addr-field { grid-column: 1 / -1; position: relative; }
+.addr-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 1500; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(16, 24, 20, .15); max-height: 300px; overflow-y: auto; }
+.addr-list li { padding: 8px 10px; border-radius: 7px; cursor: pointer; color: var(--ink); font-weight: 500; font-size: 13px; line-height: 1.35; }
+.addr-list li small { display: block; color: var(--muted); font-weight: 400; }
+.addr-list li[aria-selected="true"], .addr-list li:hover { background: var(--brand-soft); }
+.addr-list li.msg { cursor: default; color: var(--muted); }
+.autofilled { background: #f0f9f3; }

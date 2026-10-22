@@ -33,6 +33,9 @@ EDITABLE = {
     r"tracking\.ping_interval_s": "positive",
     r"tracking\.stale_after_s": "positive",
     r"traffic\.peak_speed_factor": "share",
+    r"order_defaults\.window_start": "time",
+    r"order_defaults\.window_end": "time",
+    r"order_defaults\.service_time_min": "number",
     r"illustrative": "bool",
     r"illustrative_note": "text",
 }
@@ -56,6 +59,11 @@ def _coerce(path: str, kind, value):
         return value
     if kind == "text":
         return str(value).strip()
+    if kind == "time":
+        v = str(value).strip()
+        if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", v):
+            raise AuthError(400, f"{path}: giờ dạng HH:MM")
+        return v
     n = num(value)
     if n is None or n < 0:
         raise AuthError(400, f"{path}: phải là số ≥ 0")
@@ -102,7 +110,7 @@ def update_config(actor: dict, changes: dict, reason: str) -> dict:
         if kind is None:
             raise AuthError(400, f"Không được phép sửa '{path}'")
         old = _get(new, path)
-        if old is KeyError and not path.startswith(("default_weights.", "delivery_check.", "tracking.")):
+        if old is KeyError and not path.startswith(("default_weights.", "delivery_check.", "tracking.", "order_defaults.")):
             raise AuthError(400, f"Không tồn tại '{path}'")
         v = _coerce(path, kind, value)
         if old == v:

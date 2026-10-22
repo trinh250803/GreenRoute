@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from . import analytics, assistant, auth, dispatch, seed, store, tracking
+from . import analytics, assistant, auth, dispatch, geocode, seed, store, tracking
 from .admin_config import update_config
 from .auth import ROLES, STAFF, AuthError, audit, require
 from .compare import compare_totals, run_fuel_scenario
@@ -115,7 +115,7 @@ async def login(request: Request):
 
 @app.post("/api/auth/logout", status_code=204)
 def logout(request: Request, user=Depends(auth.current_user)):
-    auth.logout(request.state.token)
+    auth.logout(request.state.session)
 
 
 @app.get("/api/auth/me")
@@ -123,10 +123,10 @@ def me(user=Depends(auth.current_user)):
     return auth.public_user(user)
 
 
-@app.post("/api/auth/change-password", status_code=204)
+@app.post("/api/auth/change-password")
 async def change_password(request: Request, user=Depends(auth.current_user)):
     b = await body_json(request)
-    auth.change_password(user, b.get("old_password"), b.get("new_password"))
+    return auth.change_password(user, b.get("old_password"), b.get("new_password"))
 
 
 # ---------- Admin: users, config, audit ----------
@@ -172,9 +172,33 @@ def get_config(user=Depends(auth.current_user)):
     return load_fuel_config()
 
 
+ENV_BANNER = os.environ.get("ENV_BANNER", "Môi trường thử nghiệm")  # set to "" in production
+
+
 @app.get("/api/health")
 def health():
-    return {"ok": True, "routing": "osrm" if os.environ.get("OSRM_URL") else "haversine_estimate", "solver": "ortools"}
+    return {"ok": True, "routing": "osrm" if os.environ.get("OSRM_URL") else "haversine_estimate", "solver": "ortools",
+            "env_banner": ENV_BANNER}
+
+
+@app.middleware("http")
+async def no_stale_web_app(request: Request, call_next):
+    # HTML/JS/CSS change with every deploy: make browsers revalidate instead of running old code.
+    resp = await call_next(request)
+    if not request.url.path.startswith("/api/") and request.url.path.endswith(("/", ".html", ".js", ".css")):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.get("/api/geocode/search")
+def geocode_search(q: str = "", user=Depends(ORDERS_WRITE)):
+    depot = store.load().get("depot") or {}
+    return geocode.search(q, depot.get("latitude"), depot.get("longitude"))
+
+
+@app.get("/api/geocode/reverse")
+def geocode_reverse(lat: float, lng: float, user=Depends(ORDERS_WRITE)):
+    return geocode.reverse(lat, lng)
 
 
 @app.get("/api/depot")

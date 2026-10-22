@@ -31,7 +31,9 @@ def make_user(client, admin, username, role, vehicle_id=None):
     # Forced password change on first login.
     assert client.get("/api/auth/me", headers=h).json()["must_change_password"]
     assert client.get("/api/depot", headers=h).status_code == 403
-    assert client.post("/api/auth/change-password", headers=h, json={"old_password": "TempPass1!", "new_password": "NewPass123!"}).status_code == 204
+    r = client.post("/api/auth/change-password", headers=h, json={"old_password": "TempPass1!", "new_password": "NewPass123!"})
+    assert r.status_code == 200 and r.json()["token"]
+    assert client.get("/api/auth/me", headers=h).status_code == 401  # old token is signed out
     return login(client, username, "NewPass123!")
 
 
@@ -187,3 +189,44 @@ def test_assistant_context_has_no_customer_pii(client, admin):
     from app.assistant import plan_context
     ctx = plan_context(store.load())
     assert "0120" not in ctx and "(synthetic)" not in ctx and "customer_name" not in ctx
+
+
+def test_session_survives_restart_and_lasts_a_day(client, admin, tmp_path, monkeypatch):
+    from app import auth, store
+    r = client.post("/api/auth/login", json={"username": "admin", "password": ADMIN_PW}).json()
+    assert 23 * 3600 < r["expires_at"] - time.time() <= 24 * 3600
+    h = {"Authorization": f'Bearer {r["token"]}'}
+    # Simulate the free host wiping the disk: same secret, admin re-created by bootstrap.
+    db = store.load()
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "fresh.json"))
+    store.save({"depot": None, "orders": [], "vehicles": [], "runs": [], "users": [u for u in db["users"] if u["username"] == "admin"]})
+    assert client.get("/api/auth/me", headers=h).status_code == 200
+    monkeypatch.undo()
+
+
+def test_logout_revokes_only_that_token(client, admin):
+    a = {"Authorization": "Bearer " + client.post("/api/auth/login", json={"username": "admin", "password": ADMIN_PW}).json()["token"]}
+    b = {"Authorization": "Bearer " + client.post("/api/auth/login", json={"username": "admin", "password": ADMIN_PW}).json()["token"]}
+    assert client.post("/api/auth/logout", headers=a).status_code == 204
+    assert client.get("/api/auth/me", headers=a).status_code == 401
+    assert client.get("/api/auth/me", headers=b).status_code == 200
+    assert client.get("/api/auth/me", headers={"Authorization": "Bearer forged.token"}).status_code == 401
+
+
+def test_geocode_endpoints(client, admin, monkeypatch):
+    from app import geocode
+    fake = {"features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [106.7077, 10.8032]},
+                          "properties": {"name": "Hẻm 118 Bạch Đằng", "district": "Bình Thạnh", "city": "Thành phố Hồ Chí Minh", "countrycode": "VN"}},
+                         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [100.5, 13.7]}, "properties": {"name": "Bangkok", "countrycode": "TH"}}]}
+    monkeypatch.setattr(geocode, "_get", lambda url: fake)
+    r = client.get("/api/geocode/search", params={"q": "118 Bạch Đằng"}, headers=admin).json()
+    assert len(r) == 1 and r[0]["latitude"] == 10.8032 and "Bình Thạnh" in r[0]["label"]
+    assert client.get("/api/geocode/search", params={"q": "ab"}, headers=admin).json() == []
+    assert client.get("/api/geocode/reverse", params={"lat": 10.8, "lng": 106.7}, headers=admin).json()["district"] == "Bình Thạnh"
+    assert client.get("/api/health").json()["env_banner"]
+
+
+def test_order_defaults_config(client, admin):
+    assert client.get("/api/config", headers=admin).json()["order_defaults"]["service_time_min"] == 5
+    assert client.put("/api/admin/config", headers=admin, json={"changes": {"order_defaults.window_start": "25:00"}, "reason": "thử giờ sai"}).status_code == 400
+    assert client.put("/api/admin/config", headers=admin, json={"changes": {"order_defaults.window_start": "07:30"}, "reason": "ca sáng sớm hơn"}).status_code == 200

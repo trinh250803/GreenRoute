@@ -12,7 +12,8 @@ from pathlib import Path
 OUT = Path(__file__).resolve().parent.parent / "data" / "sample_hcm"
 rng = random.Random(2026)
 
-DEPOT = {"name": "Kho 118 Bạch Đằng, Bình Thạnh (tọa độ ước tính — cần xác nhận)", "latitude": 10.8030, "longitude": 106.7065}
+DEPOT = {"name": "Kho 118 Bạch Đằng, Bình Thạnh", "latitude": 10.80316, "longitude": 106.70768,
+         "location_source": "OpenStreetMap (Photon): đầu hẻm 118 Bạch Đằng, Bình Thạnh — cần xác nhận tại chỗ"}
 
 # district: (center lat, center lng, spread deg, streets, share of orders)
 DISTRICTS = {

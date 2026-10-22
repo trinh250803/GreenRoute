@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#0f2a1c">
   <title>GreenRoute Tài xế</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261022b">
   <style>
     body { background: var(--bg); }
     .d-app { max-width: 640px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 24px; }
-    .d-bar { background: #0f2a1c; color: #fff; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 1000; }
+    .d-bar { background: #0f2a1c; color: #fff; padding: 12px 16px; position: sticky; top: var(--envbar); z-index: 1000; }
     .d-bar .row { display: flex; align-items: center; gap: 10px; }
     .d-bar h1 { font-size: 17px; flex: 1; }
     .d-bar .sub { color: #a7c7b2; font-size: 12px; margin-top: 2px; }
@@ -46,6 +46,7 @@
   </style>
 </head>
 <body>
+  <div id="env-banner" class="env-banner" role="status">⚠ Môi trường thử nghiệm</div>
   <div id="login-screen" class="login-screen" hidden>
     <form id="login-form" class="login-box">
       <h2><span class="brand-logo">🚚</span> GreenRoute Tài xế</h2>
@@ -79,8 +80,8 @@
   <div class="toasts" id="toasts"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="i18n.js"></script>
-  <script src="auth.js"></script>
-  <script src="driver.js"></script>
+  <script src="i18n.js?v=20261022b"></script>
+  <script src="auth.js?v=20261022b"></script>
+  <script src="driver.js?v=20261022b"></script>
 </body>
 </html>

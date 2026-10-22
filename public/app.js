@@ -408,8 +408,111 @@ $('#order-form').onsubmit = async e => {
   e.preventDefault();
   const { body } = await api('/api/orders', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
   $('#orders-report').innerHTML = reportHtml(body);
-  if (!body.errors?.length) { e.target.reset(); toast('Đã thêm đơn', 'ok'); loadOrders(); }
+  if (!body.errors?.length) { toast(`Đã thêm đơn ${$('#of-id').value}`, 'ok'); await loadOrders(); resetOrderForm(); }
 };
+
+// ---- Order form: address search, map pin, auto-filled fields (all editable) ----
+let orderMap, orderPin, addrTimer, addrItems = [], addrIdx = -1, addrSeq = 0;
+function nextOrderId() {
+  const ids = ORDERS.map(o => o.order_id), counts = {};
+  ids.forEach(id => { const m = id.match(/^([A-Za-z]+)-?(\d+)$/); if (m) counts[m[1]] = (counts[m[1]] || 0) + 1; });
+  const prefix = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'DH';
+  const nums = ids.map(id => id.match(new RegExp(`^${prefix}-?(\\d+)$`))).filter(Boolean);
+  const width = nums.length ? Math.max(...nums.map(m => m[1].length)) : 3;
+  let n = nums.length ? Math.max(...nums.map(m => Number(m[1]))) + 1 : 1;
+  while (ids.includes(`${prefix}${String(n).padStart(width, '0')}`)) n++;
+  return `${prefix}${String(n).padStart(width, '0')}`;
+}
+function markAuto(el) { el.classList.add('autofilled'); el.addEventListener('input', () => el.classList.remove('autofilled'), { once: true }); }
+function fillIfEmpty(sel, value) { const el = $(sel); if (!el.value && value != null && value !== '') { el.value = value; markAuto(el); } }
+function applyOrderDefaults() {
+  const d = CFG.order_defaults || {};
+  fillIfEmpty('#of-id', nextOrderId());
+  fillIfEmpty('#of-ws', d.window_start);
+  fillIfEmpty('#of-we', d.window_end);
+  fillIfEmpty('#of-svc', d.service_time_min);
+}
+function setOrderPoint(lat, lng, { pan = true } = {}) {
+  $('#of-lat').value = Number(lat).toFixed(6); $('#of-lng').value = Number(lng).toFixed(6);
+  markAuto($('#of-lat')); markAuto($('#of-lng'));
+  if (!orderMap) return;
+  orderPin.setLatLng([lat, lng]).setOpacity(1);
+  if (pan) orderMap.setView([lat, lng], Math.max(orderMap.getZoom(), 16));
+}
+function ensureOrderMap() {
+  if (orderMap || !$('#order-map')) return;
+  const dep = [Number($('#depot-lat').value) || 10.78, Number($('#depot-lng').value) || 106.70];
+  orderMap = L.map('order-map').setView(dep, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(orderMap);
+  L.marker(dep, { icon: depotIcon() }).addTo(orderMap);
+  orderPin = L.marker(dep, { draggable: true, opacity: 0, zIndexOffset: 1000, icon: L.divIcon({ className: '', iconSize: null, html: '<div class="veh-marker" style="--c:#dc2626">📍 Giao</div>' }) }).addTo(orderMap);
+  const pick = async ll => {
+    setOrderPoint(ll.lat, ll.lng, { pan: false });
+    try {
+      const { body: r } = await api(`/api/geocode/reverse?lat=${ll.lat}&lng=${ll.lng}`);
+      if (r) { $('#of-address').value = r.label; markAuto($('#of-address')); $('#addr-note').textContent = 'Địa chỉ cập nhật theo vị trí ghim — sửa lại số nhà nếu cần.'; }
+    } catch { $('#addr-note').textContent = 'Không tra được địa chỉ cho điểm này — nhập địa chỉ thủ công.'; }
+    applyOrderDefaults();
+  };
+  orderMap.on('click', e => pick(e.latlng));
+  orderPin.on('dragend', () => pick(orderPin.getLatLng()));
+}
+function closeAddrList() { $('#addr-list').hidden = true; $('#of-address').setAttribute('aria-expanded', 'false'); addrIdx = -1; }
+function renderAddrList(html) { $('#addr-list').innerHTML = html; $('#addr-list').hidden = false; $('#of-address').setAttribute('aria-expanded', 'true'); }
+function chooseAddr(i) {
+  const a = addrItems[i]; if (!a) return;
+  $('#of-address').value = a.label;
+  $('#addr-note').textContent = `${a.district ? a.district + ' · ' : ''}${a.latitude}, ${a.longitude} — kiểm tra lại số nhà.`;
+  closeAddrList();
+  setOrderPoint(a.latitude, a.longitude);
+  applyOrderDefaults();
+}
+$('#of-address').addEventListener('input', () => {
+  clearTimeout(addrTimer);
+  const q = $('#of-address').value.trim();
+  if (q.length < 3) { closeAddrList(); return; }
+  addrTimer = setTimeout(async () => {
+    const seq = ++addrSeq;
+    renderAddrList('<li class="msg">Đang tìm…</li>');
+    try {
+      const { body } = await api(`/api/geocode/search?q=${encodeURIComponent(q)}`);
+      if (seq !== addrSeq) return;  // a newer query is in flight
+      addrItems = body; addrIdx = -1;
+      renderAddrList(body.length ? body.map((a, i) => `<li role="option" data-i="${i}"><span>${esc(a.name || a.label)}</span><small>${esc(a.label)}</small></li>`).join('')
+        : '<li class="msg">Không tìm thấy — thử bỏ số nhà, hoặc bấm vào bản đồ để chọn vị trí.</li>');
+    } catch (err) { if (seq === addrSeq) renderAddrList(`<li class="msg">${esc(err.message)}</li>`); }
+  }, 350);
+});
+$('#of-address').addEventListener('keydown', e => {
+  if ($('#addr-list').hidden || !addrItems.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    addrIdx = (addrIdx + (e.key === 'ArrowDown' ? 1 : -1) + addrItems.length) % addrItems.length;
+    $$('#addr-list li[data-i]').forEach((li, i) => li.setAttribute('aria-selected', String(i === addrIdx)));
+  } else if (e.key === 'Enter' && addrIdx >= 0) { e.preventDefault(); chooseAddr(addrIdx); }
+  else if (e.key === 'Escape') closeAddrList();
+});
+$('#addr-list').addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); chooseAddr(Number(li.dataset.i)); } });
+$('#of-address').addEventListener('blur', () => setTimeout(closeAddrList, 150));
+['#of-lat', '#of-lng'].forEach(s => $(s).addEventListener('change', () => {
+  const pair = $(s).value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+  if (pair) { $('#of-lat').value = pair[1]; $('#of-lng').value = pair[2]; }
+  const lat = Number($('#of-lat').value), lng = Number($('#of-lng').value);
+  if (lat && lng && orderMap) { orderPin.setLatLng([lat, lng]).setOpacity(1); orderMap.setView([lat, lng], 16); }
+}));
+function resetOrderForm() {
+  $('#order-form').reset();
+  $$('#order-form .autofilled').forEach(el => el.classList.remove('autofilled'));
+  $('#addr-note').textContent = '';
+  if (orderPin) orderPin.setOpacity(0);
+  fillIfEmpty('#of-id', nextOrderId());
+}
+$('#of-reset').onclick = resetOrderForm;
+$('#order-add').addEventListener('toggle', () => {
+  if (!$('#order-add').open) return;
+  ensureOrderMap(); setTimeout(() => orderMap?.invalidateSize(), 60);
+  fillIfEmpty('#of-id', nextOrderId());
+});
 
 // ---------------------------------------------------------------- Vehicles
 function fuelOptions(type, selected) {
@@ -590,6 +693,9 @@ function renderConfigEditor() {
         <tr><td>Ngưỡng xác nhận vị trí giao (m)</td><td>${input('delivery_check.max_distance_m', dc.max_distance_m ?? 300)}</td></tr>
         <tr><td>Chu kỳ gửi vị trí tài xế (giây)</td><td>${input('tracking.ping_interval_s', tr.ping_interval_s ?? 20)}</td></tr>
         <tr><td>Tốc độ giờ cao điểm (0–1 × tốc độ thường)</td><td>${input('traffic.peak_speed_factor', CFG.traffic?.peak_speed_factor ?? 0.6)}</td></tr>
+        <tr><td>Đơn mới: giao từ (HH:MM)</td><td>${input('order_defaults.window_start', CFG.order_defaults?.window_start ?? '08:00', 'text', 90)}</td></tr>
+        <tr><td>Đơn mới: giao đến (HH:MM)</td><td>${input('order_defaults.window_end', CFG.order_defaults?.window_end ?? '17:00', 'text', 90)}</td></tr>
+        <tr><td>Đơn mới: thời gian dừng (phút)</td><td>${input('order_defaults.service_time_min', CFG.order_defaults?.service_time_min ?? 5)}</td></tr>
         <tr><td>Coi là mất tín hiệu sau (giây)</td><td>${input('tracking.stale_after_s', tr.stale_after_s ?? 300)}</td></tr>
         <tr><td>Gắn nhãn “Dữ liệu minh họa”</td><td>${boolSel('illustrative', CFG.illustrative)}</td></tr>
       </tbody></table></div></div>
@@ -629,8 +735,7 @@ async function loadAudit() {
 // ---------------------------------------------------------------- Method
 function renderMethod() {
   const b = CFG.base_factors;
-  $('#method').innerHTML = `${CFG.illustrative ? alertBox('warn', `⚠ ${esc(CFG.illustrative_note)}`) : ''}
-    <p class="hint">Phiên bản cấu hình: <code>${esc(CFG.version)}</code></p>
+  $('#method').innerHTML = `<p class="hint">Phiên bản cấu hình: <code>${esc(CFG.version)}</code></p>
     <h3>Phạm vi phát thải</h3><p>${esc(CFG.scope_note)}</p>
     <h3>Công thức</h3><ul>
       <li>Nhiên liệu (L) = km × tiêu hao (L/100km) / 100 · CO₂ (kg) = L × EF · Chi phí = L × giá</li>

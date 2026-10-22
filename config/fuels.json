@@ -3,7 +3,6 @@
   "emission_scope": "direct_combustion",
   "scope_note": "Phạm vi MVP: CO2 trực tiếp từ đốt nhiên liệu khi vận hành (tank-to-wheel). Xe điện: phát thải ống xả = 0; phát thải gián tiếp từ điện lưới được báo cáo RIÊNG, không cộng vào tổng CO2 trực tiếp.",
   "illustrative": true,
-  "illustrative_note": "Dữ liệu minh họa — hệ số và giá cần nghiệp vụ xác minh nguồn Việt Nam và phê duyệt trước khi dùng chính thức.",
   "base_factors": {
     "gasoline": {
       "value": 2.31,
@@ -221,5 +220,11 @@
     ],
     "peak_speed_factor": 0.6,
     "note": "Ước tính: trong giờ cao điểm tốc độ còn 60% tốc độ thường. Chưa dùng dữ liệu giao thông thời gian thực."
-  }
+  },
+  "order_defaults": {
+    "window_start": "08:00",
+    "window_end": "17:00",
+    "service_time_min": 5
+  },
+  "illustrative_note": "Hệ số và giá cần nghiệp vụ xác minh và phê duyệt trước khi dùng chính thức."
 }

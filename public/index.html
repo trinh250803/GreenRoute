@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GreenRoute AI</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261022b">
 </head>
 <body>
+  <div id="env-banner" class="env-banner" role="status">⚠ Môi trường thử nghiệm</div>
   <!-- ===== Login / change password ===== -->
   <div id="login-screen" class="login-screen" hidden>
     <form id="login-form" class="login-box">
@@ -127,23 +128,33 @@
             </div>
             <div id="orders-report" style="margin-top:10px"></div>
           </div>
-          <details class="card" data-roles="admin,dispatcher"><summary>Thêm đơn thủ công</summary>
-            <form id="order-form" class="form-grid">
-              <label class="field">Mã đơn *<input name="order_id" required></label>
-              <label class="field">Khách hàng<input name="customer_name"></label>
-              <label class="field">Số điện thoại<input name="phone"></label>
-              <label class="field">Địa chỉ<input name="address"></label>
-              <label class="field">Vĩ độ *<input name="latitude"></label>
-              <label class="field">Kinh độ *<input name="longitude"></label>
-              <label class="field">Khối lượng (kg)<input name="weight_kg"></label>
-              <label class="field">Thể tích (m³)<input name="volume_m3"></label>
-              <label class="field">Giao từ (HH:MM)<input name="delivery_window_start"></label>
-              <label class="field">Giao đến (HH:MM)<input name="delivery_window_end"></label>
-              <label class="field">Thời gian dừng (phút)<input name="service_time_min"></label>
-              <label class="field">Ưu tiên<select name="priority"><option value="0">Thường</option><option value="1">Ưu tiên</option></select></label>
-              <label class="field">Ghi chú<input name="note"></label>
-              <button>Lưu đơn</button>
-            </form>
+          <details class="card" id="order-add" data-roles="admin,dispatcher"><summary>Thêm đơn hàng</summary>
+            <div class="order-add">
+              <form id="order-form" class="form-grid" autocomplete="off">
+                <label class="field addr-field">Địa chỉ giao — gõ để tìm, chọn trong danh sách
+                  <input name="address" id="of-address" placeholder="VD: 118 Bạch Đằng, Bình Thạnh" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addr-list">
+                  <ul id="addr-list" class="addr-list" role="listbox" hidden></ul>
+                  <small id="addr-note" class="muted"></small>
+                </label>
+                <label class="field">Mã đơn *<input name="order_id" id="of-id" required></label>
+                <label class="field">Khách hàng<input name="customer_name"></label>
+                <label class="field">Số điện thoại<input name="phone" inputmode="tel"></label>
+                <label class="field">Vĩ độ *<input name="latitude" id="of-lat" inputmode="decimal"></label>
+                <label class="field">Kinh độ *<input name="longitude" id="of-lng" inputmode="decimal"></label>
+                <label class="field">Khối lượng (kg)<input name="weight_kg" inputmode="decimal"></label>
+                <label class="field">Thể tích (m³)<input name="volume_m3" inputmode="decimal"></label>
+                <label class="field">Giao từ (HH:MM)<input name="delivery_window_start" id="of-ws" placeholder="08:00"></label>
+                <label class="field">Giao đến (HH:MM)<input name="delivery_window_end" id="of-we" placeholder="17:00"></label>
+                <label class="field">Thời gian dừng (phút)<input name="service_time_min" id="of-svc" inputmode="numeric"></label>
+                <label class="field">Ưu tiên<select name="priority"><option value="0">Thường</option><option value="1">Ưu tiên</option></select></label>
+                <label class="field" style="grid-column:1/-1">Ghi chú<input name="note"></label>
+                <div style="grid-column:1/-1;display:flex;gap:8px"><button>Lưu đơn</button><button type="button" class="secondary" id="of-reset">Làm mới form</button></div>
+              </form>
+              <div>
+                <div id="order-map" class="map" style="height:100%;min-height:340px"></div>
+                <p class="hint" style="margin:6px 0 0">Bấm vào bản đồ hoặc kéo ghim để chỉnh vị trí — tọa độ và địa chỉ tự cập nhật.</p>
+              </div>
+            </div>
           </details>
           <div class="card"><div class="card-h"><h3 id="orders-count">Đơn hàng</h3></div><div id="orders-table"></div></div>
         </section>
@@ -264,9 +275,9 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="i18n.js"></script>
-  <script src="auth.js"></script>
-  <script src="app.js"></script>
-  <script src="insights.js"></script>
+  <script src="i18n.js?v=20261022b"></script>
+  <script src="auth.js?v=20261022b"></script>
+  <script src="app.js?v=20261022b"></script>
+  <script src="insights.js?v=20261022b"></script>
 </body>
 </html>

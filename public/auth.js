@@ -64,7 +64,9 @@ const Auth = (() => {
         if (d.new_password !== d.confirm) return err('Mật khẩu nhập lại không khớp');
         const res = await fetch('/api/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ old_password: d.old_password, new_password: d.new_password }) });
-        if (!res.ok) return err((await res.json().catch(() => ({}))).error || 'Đổi mật khẩu lỗi');
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) return err(out.error || 'Đổi mật khẩu lỗi');
+        if (out.token) setToken(out.token);  // server signs out other devices and hands back a fresh token
         el('pw-error').hidden = true; e.target.reset(); el('login-screen').hidden = true; resolve(true);
       };
     });
@@ -91,6 +93,13 @@ const Auth = (() => {
     try { await api('/api/auth/logout', { method: 'POST' }); } catch { /* already gone */ }
     setToken(null); location.reload();
   }
+
+  // Environment banner text comes from the server (ENV_BANNER); empty in production.
+  fetch('/api/health').then(r => r.json()).then(h => {
+    const b = el('env-banner'); if (!b) return;
+    if (h.env_banner) { b.textContent = `⚠ ${h.env_banner}`; b.hidden = false; }
+    else { b.hidden = true; document.documentElement.style.setProperty('--envbar', '0px'); }
+  }).catch(() => {});
 
   return { api, download, ensureUser, logout, changePassword: () => changePasswordOnce(true) };
 })();

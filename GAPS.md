@@ -29,7 +29,7 @@
 | A9 | Chưa có PostgreSQL | 8 | ⏳ Đang dùng file JSON; cần cài PostgreSQL |
 | A10 | Frontend chưa dùng React/Next.js + TypeScript | 8 | ⏳ Đang là HTML/JS thuần |
 | A11 | Chưa có Docker và hướng dẫn triển khai, backup/khôi phục | 8, 10, 12 | ⏳ |
-| A12 | Chưa có geocoding (đơn chỉ có địa chỉ bị báo lỗi) | 3.2 bước 3, 5.1 | ⏳ Cần chọn nhà cung cấp và chi phí (B5) |
+| A12 | Chưa có geocoding | 3.2 bước 3, 5.1 | ✅ Thử nghiệm: form tạo đơn tìm địa chỉ (Photon/OpenStreetMap), ghim trên bản đồ, tự điền tọa độ. ⚠ Dùng máy chủ Photon công cộng — địa chỉ gõ vào được gửi tới komoot; khi chạy thật cần tự host hoặc ký hợp đồng (B5). Nhập file CSV/XLSX vẫn cần tọa độ |
 | A13 | ML dự đoán thời gian | F-08, G4 | ⏳ Chờ dữ liệu thật; A7 bắt đầu thu thập |
 | A14 | Không biết tài xế đang ở đâu, di chuyển thế nào | F-10 (đưa lên sớm theo yêu cầu) | ✅ Tài xế bấm *Bắt đầu ca* → gửi vị trí mỗi 20 giây (có bộ đệm khi mất mạng); điều phối viên xem bản đồ trực tiếp: vị trí, vệt đường, km đã đi, điểm tiếp theo, cảnh báo mất tín hiệu. ⚠ Chỉ chạy khi trang tài xế đang mở — theo dõi nền cần app di động (B11) |
 | A15 | Xác nhận vị trí khi giao | Chống khai khống | ✅ So GPS lúc báo giao với tọa độ đơn; ngưỡng do admin cấu hình |
@@ -51,7 +51,7 @@
 | B4 | Ai phê duyệt thay đổi hệ số phát thải? Cần 2 bước (đề xuất → duyệt) không? | Hiện admin sửa trực tiếp, bắt buộc ghi lý do, có lịch sử phiên bản |
 | B5 | Nhà cung cấp geocoding/routing và ai trả phí? | Chưa chọn; hỗ trợ OSRM qua `OSRM_URL` |
 | B6 | Khách hàng cuối có cần nhận thông báo hoặc link theo dõi không? | Ngoài phạm vi MVP |
-| B7 | Chính sách mật khẩu, khóa tài khoản, thời hạn phiên, có cần SSO không? | Mật khẩu ≥ 8 ký tự, phiên 12 giờ, admin khóa được tài khoản |
+| B7 | Chính sách mật khẩu, khóa tài khoản, thời hạn phiên, có cần SSO không? | Mật khẩu ≥ 8 ký tự, phiên 24 giờ (token ký, không mất khi server khởi động lại), đăng xuất/khóa/đặt lại mật khẩu thu hồi ngay |
 | B8 | Thời gian lưu dữ liệu khách hàng và lịch sử giao hàng | Chưa có chính sách xóa/ẩn danh |
 | B9 | Nhiều kho, nhiều chuyến/ngày cho một xe | Ngoài MVP (tài liệu ghi "một kho") |
 | B10 | Mức phạt giao trễ (ràng buộc mềm) | Hiện khung giờ là ràng buộc cứng |
