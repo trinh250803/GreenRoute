@@ -19,7 +19,7 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: ENV_BANNER
-        value: Môi trường thử nghiệm
+        value: "Môi trường nghiên cứu, chưa áp dụng chính thức"
       # Secrets: entered in the Render dashboard, never committed.
       - key: ADMIN_PASSWORD
         sync: false

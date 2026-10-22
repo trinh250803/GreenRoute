@@ -172,7 +172,7 @@ def get_config(user=Depends(auth.current_user)):
     return load_fuel_config()
 
 
-ENV_BANNER = os.environ.get("ENV_BANNER", "Môi trường thử nghiệm")  # set to "" in production
+ENV_BANNER = os.environ.get("ENV_BANNER", "Môi trường nghiên cứu, chưa áp dụng chính thức")  # set to "" in production
 
 
 @app.get("/api/health")

@@ -23,7 +23,7 @@ function initChartDefaults() {
   Chart.defaults.plugins.tooltip.padding = 10;
   Chart.defaults.maintainAspectRatio = false;
 }
-const nf = (v, d = 0) => Number(v ?? 0).toLocaleString(typeof I18N !== 'undefined' && I18N.get() === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: d });
+const nf = (v, d = 0) => Number(v ?? 0).toLocaleString({ en: 'en-US', zh: 'zh-CN' }[typeof I18N !== 'undefined' ? I18N.get() : 'vi'] || 'vi-VN', { maximumFractionDigits: d });
 function axes({ horizontal = false, stacked = false, unit = '', max, count = false } = {}) {
   // Counts (orders, stops) get integer ticks only.
   const value = { stacked, beginAtZero: true, max, grid: { color: VIZ.grid, drawTicks: false }, border: { display: false },

@@ -1,5 +1,6 @@
 'use strict';
-/* VI/EN switch. Vietnamese is the source language; English comes from the dictionary below.
+/* VI / EN / 中文 switch. Vietnamese is the source language; English comes from the dictionary
+   below, Simplified Chinese from i18n-zh.js (same keys).
    A MutationObserver translates every text node and placeholder/title as it appears, so
    dynamically rendered tables, toasts and map popups are covered without touching render code.
    Server messages (validation errors, reasons) stay in Vietnamese. */
@@ -106,6 +107,7 @@ const I18N = (() => {
     'Làm sao giảm CO₂ mà không tăng nhiều chi phí?': 'How can we cut CO₂ without much extra cost?', 'Tóm tắt tình hình giao hàng hôm nay': "Summarise today's deliveries",
     'Đang suy nghĩ…': 'Thinking…', 'Xóa hội thoại': 'Clear chat',
     'Trợ lý chỉ dùng số liệu của phương án đang xem; không gửi tên, SĐT, địa chỉ khách.': 'The assistant only sees plan figures; customer names, phones and addresses are never sent.',
+    'Môi trường nghiên cứu, chưa áp dụng chính thức': 'Research environment — not yet in official use',
     'Môi trường thử nghiệm': 'Test environment', 'Thêm đơn hàng': 'Add order', 'Địa chỉ giao — gõ để tìm, chọn trong danh sách': 'Delivery address — type to search, pick from the list',
     'VD: 118 Bạch Đằng, Bình Thạnh': 'e.g. 118 Bạch Đằng, Bình Thạnh', 'Làm mới form': 'Reset form', 'Đang tìm…': 'Searching…',
     'Bấm vào bản đồ hoặc kéo ghim để chỉnh vị trí — tọa độ và địa chỉ tự cập nhật.': 'Click the map or drag the pin to adjust — coordinates and address update automatically.',
@@ -130,18 +132,21 @@ const I18N = (() => {
     [/^Đội xe \((\d+) xe · (\d+) sẵn sàng\)$/, 'Fleet ($1 vehicles · $2 available)'], [/^(\d+) điểm$/, '$1 stops'], [/^tải (.+)$/, 'load $1'],
     [/^Tiếp: (.*)$/, 'Next: $1'], [/^\(dự kiến (.+)\)$/, '(planned $1)'], [/^cách (.+) km$/, '$1 km away'], [/^đã đi (.+) km$/, '$1 km travelled'],
     [/^(\d+) online$/, '$1 online'], [/^(\d+) xe$/, '$1 vehicles'], [/^Online · (.+) trước$/, 'Online · $1 ago'], [/^(\d+)s trước$/, '$1s ago'],
-    [/^(\d+) phút trước$/, '$1 min ago'], [/^Tự làm mới 15 giây · (.+)$/, 'Auto-refresh 15 s · $1'], [/^(.+) giờ xe chạy$/, '$1 vehicle-hours'],
+    [/^(\d+) phút trước$/, '$1 min ago'], [/^(\d+) giờ trước$/, '$1 h ago'], [/^(\d+) cảnh báo$/, '$1 warnings'], [/^Tự làm mới 15 giây · (.+)$/, 'Auto-refresh 15 s · $1'], [/^(.+) giờ xe chạy$/, '$1 vehicle-hours'],
     [/^Đã lưu (\d+) dòng \(tổng (\d+)\)\.$/, 'Saved $1 rows (total $2).'], [/^Xe (\S+)$/, 'Vehicle $1'], [/^Điểm tiếp theo · (.+)$/, 'Next stop · $1'],
     [/^Dự kiến (.+)$/, 'Planned $1'], [/^dừng ~(.+)$/, 'stop ~$1'], [/^Còn lại \((\d+)\)$/, 'Remaining ($1)'], [/^Đã xử lý \((\d+)\)$/, 'Processed ($1)'],
     [/^Chưa phân công \((\d+)\)$/, 'Unassigned ($1)'], [/^\((\d+)\)$/, '($1)'],
   ];
   const ORIG = new WeakMap(), ORIG_ATTR = new WeakMap();
+  const LANGS = { vi: 'VI', en: 'EN', zh: '中文' };
+  const HTML_LANG = { vi: 'vi', en: 'en', zh: 'zh-CN' };
   let lang = 'vi';
-  try { lang = localStorage.getItem('gr_lang') === 'en' ? 'en' : 'vi'; } catch { /* default vi */ }
+  try { const saved = localStorage.getItem('gr_lang'); if (saved in LANGS) lang = saved; } catch { /* default vi */ }
 
   // Common fragments inside composite strings ("186 g/đơn · ▼", "(khác số đơn)") — applied only
   // when no whole-string entry matched, longest first.
   const FRAGMENTS = [
+    ['Môi trường nghiên cứu, chưa áp dụng chính thức', 'Research environment — not yet in official use'],
     ['Giờ cao điểm', 'Peak hours'], ['giờ cao điểm', 'peak hours'], ['Điểm tiếp theo', 'Next stop'],
     ['Môi trường thử nghiệm', 'Test environment'], ['kiểm tra lại số nhà', 'check the house number'], ['Đã thêm đơn', 'Order added'],
     ['khác số đơn', 'different order count'], ['so với baseline', 'vs baseline'], ['đơn nguy cơ trễ', 'orders at late risk'], ['nguy cơ trễ', 'late risk'],
@@ -149,18 +154,25 @@ const I18N = (() => {
     ['Phương án này đã phát hành lúc', 'This plan was published at'], ['chặng giờ cao điểm', 'peak-hour legs'], ['chặng', 'legs'], ['giờ xe chạy', 'vehicle-hours'],
     ['Phương án đang phát hành', 'Published plan'], ['Phương án mới nhất', 'Latest plan'], ['đã giao', 'delivered'], ['thất bại', 'failed'], ['còn lại', 'remaining'],
     ['Đã phát hành', 'Published'], ['bởi', 'by'], ['xe sẵn sàng', 'vehicles available'], ['xe có tài xế', 'with a driver'], ['đơn đã nhập', 'orders imported'],
-    ['Mất tín hiệu', 'Lost signal'], ['phút trước', 'min ago'], ['đơn chưa phân công', 'unassigned orders'], ['trong phương án mới nhất', 'in the latest plan'],
+    ['Mất tín hiệu', 'Lost signal'], ['phút trước', 'min ago'], ['giờ trước', 'h ago'], ['đơn chưa phân công', 'unassigned orders'], ['trong phương án mới nhất', 'in the latest plan'],
     ['đơn giao thất bại', 'failed deliveries'], ['cần xử lý lại', 'needs follow-up'], ['xe chưa có tài xế', 'vehicles without a driver'],
     ['Phương án mới nhất', 'The latest plan'], ['tài xế chưa nhận được tuyến', 'drivers have not received routes'], ['chưa phát hành', 'not published'],
     ['Nét đứt = xe điện', 'Dashed = electric'], ['Chấm đỏ = chưa phân công', 'Red dot = unassigned'], ['Xa điểm giao', 'Far from stop'], ['Không có định vị', 'No location'],
     ['đã đi', 'travelled'], ['dự kiến', 'planned'], ['cách', ''], ['Tiếp:', 'Next:'], ['điểm', 'stops'], ['/đơn', '/order'], ['đơn', 'orders'], ['xe', 'vehicles'],
   ].sort((a, b) => b[0].length - a[0].length);
+  const DICTS = {
+    en: { map: EN, patterns: PATTERNS, fragments: FRAGMENTS },
+    zh: typeof I18N_ZH !== 'undefined'
+      ? { ...I18N_ZH, fragments: [...I18N_ZH.fragments].sort((a, b) => b[0].length - a[0].length) }
+      : { map: {}, patterns: [], fragments: [] },
+  };
   const VI_CHARS = /[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/i;
 
   const EDGE = /^([\s\p{P}\p{S}]*)(.*?)([\s\p{P}\p{S}]*)$/su;
   function lookup(core) {
-    if (EN[core]) return EN[core];
-    for (const [re, rep] of PATTERNS) if (re.test(core)) return core.replace(re, rep);
+    const d = DICTS[lang];
+    if (d.map[core]) return d.map[core];
+    for (const [re, rep] of d.patterns) if (re.test(core)) return core.replace(re, rep);
     return null;
   }
   function tr(text) {
@@ -173,14 +185,16 @@ const I18N = (() => {
     if (m && m[1] && (hit = lookup(trimmed.slice(m[1].length))) != null) return lead + m[1] + hit + trail;  // "🚦 Giờ cao điểm (ước tính)"
     if (!VI_CHARS.test(trimmed)) return null;
     let out = trimmed;
-    for (const [vi, en] of FRAGMENTS) out = out.split(vi).join(en);
-    return out === trimmed ? null : lead + out.replace(/\s{2,}/g, ' ') + trail;
+    for (const [vi, tx] of DICTS[lang].fragments) out = out.split(vi).join(tx);
+    // Only accept a complete translation; a half-translated sentence is worse than the original.
+    if (out === trimmed || VI_CHARS.test(out)) return null;
+    return lead + out.replace(/\s{2,}/g, ' ') + trail;
   }
   function applyNode(n) {
     if (n.nodeType === 3) {
       if (!ORIG.has(n)) ORIG.set(n, n.nodeValue);
       const src = ORIG.get(n);
-      const out = lang === 'en' ? (tr(src) ?? src) : src;
+      const out = lang !== 'vi' ? (tr(src) ?? src) : src;
       if (n.nodeValue !== out) n.nodeValue = out;
       return;
     }
@@ -189,7 +203,7 @@ const I18N = (() => {
       if (!n.hasAttribute?.(a)) continue;
       let o = ORIG_ATTR.get(n); if (!o) ORIG_ATTR.set(n, o = {});
       if (!(a in o)) o[a] = n.getAttribute(a);
-      const out = lang === 'en' ? (tr(o[a]) ?? o[a]) : o[a];
+      const out = lang !== 'vi' ? (tr(o[a]) ?? o[a]) : o[a];
       if (n.getAttribute(a) !== out) n.setAttribute(a, out);
     }
     n.childNodes.forEach(applyNode);
@@ -204,14 +218,14 @@ const I18N = (() => {
     obs.takeRecords();
   });
   function set(l) {
-    lang = l; try { localStorage.setItem('gr_lang', l); } catch { /* ignore */ }
-    document.documentElement.lang = l;
+    lang = l in LANGS ? l : 'vi'; try { localStorage.setItem('gr_lang', lang); } catch { /* ignore */ }
+    document.documentElement.lang = HTML_LANG[lang];
     applyNode(document.body); obs.takeRecords();
-    document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
-    window.dispatchEvent(new CustomEvent('langchange', { detail: l }));
+    document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    window.dispatchEvent(new CustomEvent('langchange', { detail: lang }));
   }
   function mountSwitch(el) {
-    el.innerHTML = '<div class="seg lang-seg"><button type="button" data-lang="vi">VI</button><button type="button" data-lang="en">EN</button></div>';
+    el.innerHTML = `<div class="seg lang-seg">${Object.entries(LANGS).map(([k, l]) => `<button type="button" data-lang="${k}" lang="${HTML_LANG[k]}">${l}</button>`).join('')}</div>`;
     el.onclick = e => { const b = e.target.closest('[data-lang]'); if (b) set(b.dataset.lang); };
   }
   document.addEventListener('DOMContentLoaded', () => {
@@ -219,5 +233,5 @@ const I18N = (() => {
     set(lang);
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   });
-  return { set, get: () => lang, t: s => (lang === 'en' ? (tr(s) ?? s) : s) };
+  return { set, get: () => lang, t: s => (lang !== 'vi' ? (tr(s) ?? s) : s) };
 })();
