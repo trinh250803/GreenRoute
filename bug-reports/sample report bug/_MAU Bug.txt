@@ -1,45 +1,45 @@
-﻿========================================================================
-Bug XXX Màn hình XX - Chức năng XXX đang thực hiện A thay vì đúng theo B
-========================================================================
-
-Loại                : Bug
-Mức độ              : Nghiêm trọng / Cao / Trung bình / Thấp
-Môi trường          : Online (onrender.com) / Local — trình duyệt, máy tính hay điện thoại
-Tài khoản / vai trò : ví dụ: dieuphoi01 (Điều phối)
-Ngôn ngữ giao diện  : VI / EN / 中文
-Ngày phát hiện      : dd/mm/yyyy hh:mm
-Người log           : 
-Trạng thái          : Mới / Đang sửa / Chờ kiểm tra lại / Đã đóng / Không phải lỗi
-
-Description
------------
-
-Mô tả ngắn: lỗi gì, ảnh hưởng ai, xảy ra luôn hay thỉnh thoảng.
-
-Step
-----
-
-1.
-2.
-3.
-
-Actual
-------
-
-[Ảnh: images/bugXXX_image1.png]
-
-1.
-2.
-3.
-
-Expected
---------
-
-1.
-2.
-3.
-
-Ghi chú / căn cứ
-----------------
-
-Mục tài liệu yêu cầu liên quan, số liệu tính tay (nếu là lỗi công thức), dữ liệu test đã dùng.
+﻿========================================================================
+Bug XXX Màn hình XX - Chức năng XXX đang thực hiện A thay vì đúng theo B
+========================================================================
+
+Loại                : Bug
+Mức độ              : Nghiêm trọng / Cao / Trung bình / Thấp
+Môi trường          : Online (onrender.com) / Local — trình duyệt, máy tính hay điện thoại
+Tài khoản / vai trò : ví dụ: dieuphoi01 (Điều phối)
+Ngôn ngữ giao diện  : VI / EN / 中文
+Ngày phát hiện      : dd/mm/yyyy hh:mm
+Người log           : 
+Trạng thái          : Mới / Đang sửa / Chờ kiểm tra lại / Đã đóng / Không phải lỗi
+
+Description
+-----------
+
+Mô tả ngắn: lỗi gì, ảnh hưởng ai, xảy ra luôn hay thỉnh thoảng.
+
+Step
+----
+
+1.
+2.
+3.
+
+Actual
+------
+
+[Ảnh: images/bugXXX_image1.png]
+
+1.
+2.
+3.
+
+Expected
+--------
+
+1.
+2.
+3.
+
+Ghi chú / căn cứ
+----------------
+
+Mục tài liệu yêu cầu liên quan, số liệu tính tay (nếu là lỗi công thức), dữ liệu test đã dùng.
