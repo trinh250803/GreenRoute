@@ -66,8 +66,8 @@ async def body_json(request: Request):
         return {}
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
-        raise ApiError(400, "JSON không hợp lệ")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise ApiError(400, "JSON không hợp lệ (cần mã hóa UTF-8)")
 
 
 async def rows_from_request(request: Request) -> list[dict]:

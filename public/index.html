@@ -69,12 +69,17 @@
               <label class="field">Kho xuất phát<input id="depot-name" placeholder="Tên kho" style="width:200px"></label>
               <label class="field">Vĩ độ<input id="depot-lat" style="width:110px"></label>
               <label class="field">Kinh độ<input id="depot-lng" style="width:120px"></label>
+              <button id="btn-depot-pick" class="secondary">📍 Chọn trên bản đồ</button>
               <button id="btn-depot" class="secondary">Lưu kho</button>
               <span class="grow"></span>
               <label class="field" title="Quy đổi 1 kg CO₂ thành chi phí khi tối ưu (chờ chủ dự án duyệt)">Giá CO₂ (VND/kg)<input id="w-co2" type="number" min="0" style="width:110px"></label>
               <label class="field">Thời gian giải (giây)<input id="time-limit" type="number" min="1" max="60" style="width:110px"></label>
               <button id="btn-run" class="lg">▶ Chạy tối ưu</button>
               <button id="btn-publish" class="lg secondary" disabled>📤 Phát hành cho tài xế</button>
+            </div>
+            <div id="depot-pick" hidden style="margin-top:12px">
+              <div class="alert info" style="margin-bottom:8px">Bấm vào bản đồ (hoặc kéo ghim) để đặt đúng vị trí kho, rồi bấm <b>Lưu kho</b>. Mẹo: trên Google Maps, bấm chuột phải vào địa điểm để copy tọa độ và dán vào ô Vĩ độ / Kinh độ.</div>
+              <div id="depot-map" class="map" style="height:380px"></div>
             </div>
             <div id="publish-msg" style="margin-top:10px"></div>
           </div>

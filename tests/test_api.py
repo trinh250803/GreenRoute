@@ -155,3 +155,9 @@ def test_live_tracking(client, admin):
     client.post("/api/driver/sharing", headers=drv, json={"on": False})
     assert client.post("/api/driver/location", headers=drv, json=ping).status_code == 409
     assert client.get("/api/driver/route", headers=drv).json()["tracking"]["sharing"] is False
+
+
+def test_non_utf8_body_is_400(client, admin):
+    r = client.put("/api/depot", headers={**admin, "Content-Type": "application/json"},
+                   content='{"name":"Kho Bạch Đằng","latitude":10.8,"longitude":106.7}'.encode("cp1258", errors="replace"))
+    assert r.status_code == 400

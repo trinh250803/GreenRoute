@@ -269,8 +269,36 @@ $('#btn-publish').onclick = e => busy(e.target, async () => {
 });
 $('#btn-depot').onclick = e => busy(e.target, async () => {
   await api('/api/depot', { method: 'PUT', body: JSON.stringify({ name: $('#depot-name').value, latitude: $('#depot-lat').value, longitude: $('#depot-lng').value }) });
-  toast('Đã lưu kho', 'ok');
+  toast('Đã lưu kho — chạy tối ưu lại để áp dụng', 'ok');
 });
+
+// Pick the depot on a map (no geocoding service yet — gap A12).
+let depotMap, depotPin;
+function setDepotInputs(ll) {
+  $('#depot-lat').value = ll.lat.toFixed(6);
+  $('#depot-lng').value = ll.lng.toFixed(6);
+}
+$('#btn-depot-pick').onclick = () => {
+  const box = $('#depot-pick');
+  box.hidden = !box.hidden;
+  if (box.hidden) return;
+  const lat = Number($('#depot-lat').value) || 10.78, lng = Number($('#depot-lng').value) || 106.70;
+  if (!depotMap) {
+    depotMap = L.map('depot-map').setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(depotMap);
+    depotPin = L.marker([lat, lng], { draggable: true, icon: depotIcon() }).addTo(depotMap);
+    depotPin.on('dragend', () => setDepotInputs(depotPin.getLatLng()));
+    depotMap.on('click', ev => { depotPin.setLatLng(ev.latlng); setDepotInputs(ev.latlng); });
+  }
+  setTimeout(() => { depotMap.invalidateSize(); depotMap.setView([lat, lng], 16); depotPin.setLatLng([lat, lng]); }, 50);
+};
+['#depot-lat', '#depot-lng'].forEach(s => $(s).addEventListener('change', () => {
+  // Accept "10.8030, 106.7065" pasted from Google Maps into either box.
+  const pair = $(s).value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+  if (pair) { $('#depot-lat').value = pair[1]; $('#depot-lng').value = pair[2]; }
+  const lat = Number($('#depot-lat').value), lng = Number($('#depot-lng').value);
+  if (depotMap && lat && lng) { depotPin.setLatLng([lat, lng]); depotMap.setView([lat, lng], 16); }
+}));
 
 // ---------------------------------------------------------------- Live tracking
 function ensureLiveMap() {
