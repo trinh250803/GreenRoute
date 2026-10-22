@@ -4,6 +4,8 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (v, d = 0) => (v == null ? '<span class="badge warn">thiếu dữ liệu</span>' : Number(v).toLocaleString('vi-VN', { maximumFractionDigits: d }));
+// Last word that starts with a letter: "Phạm Văn Tài (VAN-01)" → "T", not "(".
+const initial = name => ([...String(name).split(/\s+/)].reverse().find(w => /^\p{L}/u.test(w)) || '?')[0].toUpperCase();
 const t2 = m => (m == null ? '' : `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(Math.round(m % 60)).padStart(2, '0')}`);
 const ago = s => (s == null ? 'chưa có' : s < 60 ? `${s}s trước` : s < 3600 ? `${Math.round(s / 60)} phút trước` : `${Math.round(s / 3600)} giờ trước`);
 const api = Auth.api;
@@ -653,7 +655,7 @@ async function loadAdmin() {
   $('#uf-vehicle').innerHTML = vehOpts('');
   $('#dataset').innerHTML = Object.entries(datasets).map(([k, l]) => `<option value="${k}" ${k === 'hcm' ? 'selected' : ''}>${esc(l)}</option>`).join('');
   $('#users').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Tài khoản</th><th>Họ tên</th><th>Vai trò</th><th>Xe (tài xế)</th><th>Trạng thái</th><th>Đăng nhập gần nhất</th><th></th></tr></thead><tbody>${
-    users.map(u => `<tr data-user="${esc(u.username)}"><td><div style="display:flex;gap:8px;align-items:center"><div class="avatar" style="width:28px;height:28px;font-size:12px;background:${colorFor(u.username)}">${esc(u.full_name.split(' ').pop()[0] || '?')}</div><b>${esc(u.username)}</b></div>${u.must_change_password ? '<span class="badge warn">chờ đổi MK</span>' : ''}</td>
+    users.map(u => `<tr data-user="${esc(u.username)}"><td><div style="display:flex;gap:8px;align-items:center"><div class="avatar" style="width:28px;height:28px;font-size:12px;background:${colorFor(u.username)}">${esc(initial(u.full_name || u.username))}</div><b>${esc(u.username)}</b></div>${u.must_change_password ? '<span class="badge warn">chờ đổi MK</span>' : ''}</td>
       <td><input data-f="full_name" value="${esc(u.full_name)}"></td>
       <td><select data-f="role">${roleOpts(u.role)}</select></td>
       <td><select data-f="vehicle_id">${vehOpts(u.vehicle_id)}</select></td>
@@ -804,7 +806,7 @@ $('#btn-pw').onclick = () => Auth.changePassword();
   if (ME.role === 'driver') { location.replace('/driver.html'); return; }
   $('#who-name').textContent = ME.full_name;
   $('#who-role').textContent = ME.role_label;
-  $('#avatar').textContent = (ME.full_name.split(' ').pop() || '?')[0];
+  $('#avatar').textContent = initial(ME.full_name || ME.username);
   CFG = (await api('/api/config')).body;
   applyRoles(); buildMenu(); applyDefaults(); updateBanner();
   $('#vf-type').innerHTML = Object.entries(CFG.vehicle_types).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
