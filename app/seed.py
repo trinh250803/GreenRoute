@@ -19,13 +19,30 @@ from .validation import validate_orders, validate_vehicles
 log = logging.getLogger("greenroute")
 
 
+def parse_accounts(raw: str):
+    """Tolerate common paste mistakes from a dashboard: a leading 'SEED_ACCOUNTS_JSON=',
+    or objects pasted without the surrounding [ ]."""
+    raw = raw.strip()
+    if raw.startswith("SEED_ACCOUNTS_JSON="):
+        raw = raw[len("SEED_ACCOUNTS_JSON="):].strip()
+    for candidate in (raw, f"[{raw}]"):
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            data = [data]
+        if isinstance(data, list) and all(isinstance(a, dict) for a in data):
+            return data
+    return None
+
+
 def seed_from_env() -> None:
     raw = os.environ.get("SEED_ACCOUNTS_JSON")
     if not raw:
         return
-    try:
-        accounts = json.loads(raw)
-    except json.JSONDecodeError:
+    accounts = parse_accounts(raw)
+    if accounts is None:
         log.error("SEED_ACCOUNTS_JSON không phải JSON hợp lệ — bỏ qua seed")
         return
     with store.lock:
