@@ -2,55 +2,80 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f2a1c">
   <title>GreenRoute Tài xế</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css">
   <style>
-    body { max-width: 640px; margin: 0 auto; }
-    .d-head { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 16px; position: sticky; top: 0; z-index: 10; }
-    .d-head h1 { font-size: 18px; margin: 0; }
-    .d-sum { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .stop { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 10px 16px; }
-    .stop.delivered { opacity: .65; border-left: 4px solid var(--green); }
-    .stop.failed { border-left: 4px solid var(--red); }
-    .stop h3 { margin: 0 0 4px; font-size: 16px; display: flex; justify-content: space-between; gap: 8px; }
-    .stop .meta { color: var(--muted); font-size: 13px; }
-    .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .actions button, .actions a { flex: 1; min-height: 44px; font-size: 15px; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
-    .actions a { background: #e8f2ec; color: var(--green); }
-    .fail-box { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .fail-box select, .fail-box input { min-height: 40px; }
+    body { background: var(--bg); }
+    .d-app { max-width: 640px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 24px; }
+    .d-bar { background: #0f2a1c; color: #fff; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 1000; }
+    .d-bar .row { display: flex; align-items: center; gap: 10px; }
+    .d-bar h1 { font-size: 17px; flex: 1; }
+    .d-bar .sub { color: #a7c7b2; font-size: 12px; margin-top: 2px; }
+    .d-bar button { background: rgba(255,255,255,.1); color: #fff; padding: 6px 10px; font-size: 13px; }
+    .d-bar .progress { margin-top: 10px; background: rgba(255,255,255,.15); }
+    .share { margin: 12px 16px 0; border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; }
+    .share.off { background: var(--surface); border: 1px dashed var(--brand); }
+    .share.on { background: var(--brand-soft); border: 1px solid #bfe3cb; }
+    .share .txt { flex: 1; font-size: 13px; }
+    .share .txt b { display: block; font-size: 14px; }
+    #d-map { height: 34vh; min-height: 220px; margin: 12px 16px 0; border-radius: 12px; border: 1px solid var(--line); position: relative; z-index: 0; }
+    .map-btn { position: absolute; right: 10px; bottom: 10px; z-index: 500; background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .next { margin: 12px 16px 0; border: 2px solid var(--brand); border-radius: 14px; background: var(--surface); padding: 14px; box-shadow: var(--shadow); }
+    .next .lbl { font-size: 12px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: .05em; }
+    .next h2 { font-size: 20px; margin: 4px 0 2px; }
+    .next .addr { font-size: 15px; }
+    .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .acts > * { min-height: 48px; justify-content: center; font-size: 15px; border-radius: 10px; }
+    .acts .wide { grid-column: span 2; min-height: 56px; font-size: 17px; }
+    .fail-box { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .fail-box select, .fail-box input { min-height: 44px; font-size: 15px; }
+    .tabs { margin: 16px 16px 0; }
+    .stop { margin: 8px 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    .stop .h { display: flex; align-items: center; gap: 8px; }
+    .stop .n { width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: 12px; flex: none; }
+    .stop.delivered .n { background: var(--brand); color: #fff; border: 0; } .stop.failed .n { background: var(--red); color: #fff; border: 0; }
+    .stop .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .done-all { margin: 16px; text-align: center; }
   </style>
 </head>
 <body>
   <div id="login-screen" class="login-screen" hidden>
     <form id="login-form" class="login-box">
-      <h2>🌿 GreenRoute — Tài xế</h2>
-      <input name="username" placeholder="Tên đăng nhập" autocomplete="username" required>
-      <input name="password" type="password" placeholder="Mật khẩu" autocomplete="current-password" required>
-      <button>Đăng nhập</button>
-      <div id="login-error" class="err" hidden></div>
+      <h2><span class="brand-logo">🚚</span> GreenRoute Tài xế</h2>
+      <label class="field">Tên đăng nhập<input name="username" autocomplete="username" required></label>
+      <label class="field">Mật khẩu<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="lg">Đăng nhập</button>
+      <div id="login-error" class="alert err" hidden></div>
     </form>
     <form id="pw-form" class="login-box" hidden>
       <h2>Đổi mật khẩu</h2>
-      <p class="hint">Đặt mật khẩu mới trước khi sử dụng (tối thiểu 8 ký tự).</p>
-      <input name="old_password" type="password" placeholder="Mật khẩu hiện tại" autocomplete="current-password" required>
-      <input name="new_password" type="password" placeholder="Mật khẩu mới" autocomplete="new-password" required minlength="8">
-      <input name="confirm" type="password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required minlength="8">
-      <button>Lưu mật khẩu</button>
-      <div id="pw-error" class="err" hidden></div>
+      <label class="field">Mật khẩu hiện tại<input name="old_password" type="password" autocomplete="current-password" required></label>
+      <label class="field">Mật khẩu mới (≥ 8 ký tự)<input name="new_password" type="password" autocomplete="new-password" required minlength="8"></label>
+      <label class="field">Nhập lại<input name="confirm" type="password" autocomplete="new-password" required minlength="8"></label>
+      <button class="lg">Lưu mật khẩu</button>
+      <div id="pw-error" class="alert err" hidden></div>
     </form>
   </div>
 
-  <div class="d-head">
-    <div class="topbar">
-      <h1 id="d-title">🚚 Tuyến của tôi</h1>
-      <div><button id="btn-refresh" class="secondary">↻</button> <button id="btn-logout" class="secondary">Đăng xuất</button></div>
+  <div class="d-app">
+    <div class="d-bar">
+      <div class="row"><h1 id="d-title">🚚 Tuyến của tôi</h1><button id="btn-refresh" aria-label="Làm mới">↻</button><button id="btn-logout">Thoát</button></div>
+      <div class="sub" id="d-sum"></div>
+      <div class="progress" id="d-progress" hidden><span class="p-ok" id="p-ok"></span><span class="p-bad" id="p-bad"></span></div>
     </div>
-    <div id="d-sum" class="d-sum"></div>
+    <div id="share"></div>
+    <div id="d-map"><button class="map-btn sm" id="btn-me">📍 Vị trí của tôi</button></div>
+    <div id="next"></div>
+    <div class="tabs"><div class="seg" id="d-seg"><button class="active" data-t="todo">Còn lại</button><button data-t="done">Đã xử lý</button></div></div>
+    <div id="list"></div>
   </div>
-  <div id="d-body"></div>
+  <div class="toasts" id="toasts"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="auth.js"></script>
   <script src="driver.js"></script>
 </body>

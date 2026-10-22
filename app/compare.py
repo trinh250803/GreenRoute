@@ -3,7 +3,7 @@ from .emissions import check_compatibility, compute_trip, rnd
 from .solver import solve, summarize
 
 METRICS = ["distance_km", "duration_min", "total_cost_vnd", "energy_cost_vnd", "co2_direct_kg",
-           "co2_grid_indirect_kg", "co2_per_km", "vehicles_used", "orders_unassigned"]
+           "co2_grid_indirect_kg", "co2_per_km", "cost_per_order_vnd", "co2_per_order", "vehicles_used", "orders_unassigned"]
 
 
 def pct_change(base, val):
@@ -18,7 +18,11 @@ def compare_totals(reference: dict, candidate: dict) -> dict:
     """Side-by-side metrics with % change. Regressions are reported too (mục 6.3)."""
     rows = [{"metric": m, "reference": reference.get(m), "candidate": candidate.get(m),
              "change_pct": pct_change(reference.get(m), candidate.get(m))} for m in METRICS]
-    return {"rows": rows,
+    comparable = reference.get("orders_assigned") == candidate.get("orders_assigned")
+    return {"rows": rows, "comparable": comparable,
+            "comparable_note": None if comparable else
+            f'Hai phương án giao số đơn khác nhau ({reference.get("orders_assigned")} và {candidate.get("orders_assigned")}) — '
+            "km/chi phí/CO₂ không so sánh ngang hàng; xem thêm chỉ số trên mỗi đơn.",
             "improved": [r["metric"] for r in rows if r["change_pct"] is not None and r["change_pct"] < 0],
             "worse": [r["metric"] for r in rows if r["change_pct"] is not None and r["change_pct"] > 0]}
 

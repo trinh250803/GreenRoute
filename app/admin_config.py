@@ -28,6 +28,8 @@ EDITABLE = {
     r"default_weights\.time_vnd_per_min": "number",
     r"default_weights\.time_limit_s": "limit",
     r"delivery_check\.max_distance_m": "positive",
+    r"tracking\.ping_interval_s": "positive",
+    r"tracking\.stale_after_s": "positive",
     r"illustrative": "bool",
     r"illustrative_note": "text",
 }
@@ -97,7 +99,7 @@ def update_config(actor: dict, changes: dict, reason: str) -> dict:
         if kind is None:
             raise AuthError(400, f"Không được phép sửa '{path}'")
         old = _get(new, path)
-        if old is KeyError and not path.startswith(("default_weights.", "delivery_check.")):
+        if old is KeyError and not path.startswith(("default_weights.", "delivery_check.", "tracking.")):
             raise AuthError(400, f"Không tồn tại '{path}'")
         v = _coerce(path, kind, value)
         if old == v:

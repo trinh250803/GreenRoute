@@ -49,7 +49,7 @@ def seed_from_env() -> None:
         db = store.load()
         if db["vehicles"]:
             return
-        d = Path(__file__).resolve().parent.parent / "data" / "sample"
+        d = Path(__file__).resolve().parent.parent / "data" / {"small": "sample"}.get(os.environ.get("SEED_DATASET", "hcm"), "sample_hcm")
         db["depot"] = json.loads((d / "depot.json").read_text(encoding="utf-8"))
         db["orders"] = validate_orders(parse_csv((d / "orders.csv").read_text(encoding="utf-8")))["valid"]
         db["vehicles"] = validate_vehicles(parse_csv((d / "vehicles.csv").read_text(encoding="utf-8")), load_fuel_config())["valid"]

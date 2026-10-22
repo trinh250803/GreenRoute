@@ -80,6 +80,10 @@ def validate_orders(rows: list[dict]) -> dict:
         if service < 0:
             errs.append("service_time_min âm")
 
+        phone = re.sub(r"[\s.-]", "", str(r.get("phone") or ""))
+        if phone and not re.fullmatch(r"\+?\d{8,15}", phone):
+            errs.append("phone không hợp lệ")
+
         if errs:
             errors.append({"line": line, "order_id": oid or None, "errors": errs})
             continue
@@ -87,6 +91,8 @@ def validate_orders(rows: list[dict]) -> dict:
             "order_id": oid, "address": r.get("address") or "", "latitude": lat, "longitude": lng,
             "weight_kg": weight, "volume_m3": volume, "tw_start": ws, "tw_end": we,
             "service_time_min": service, "priority": num(r.get("priority")) or 0,
+            "customer_name": str(r.get("customer_name") or "").strip()[:100],
+            "phone": phone, "note": str(r.get("note") or "").strip()[:300],
         })
     return {"valid": valid, "errors": errors, "warnings": warnings}
 

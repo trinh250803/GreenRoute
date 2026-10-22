@@ -254,28 +254,29 @@ def summarize(routes: list[dict], n_orders: int, n_unassigned: int) -> dict:
         "co2_grid_indirect_kg": rnd(_sum(routes, "co2_grid_indirect_kg"), 3),
         "co2_per_km": rnd(co2 / km, 4) if co2 is not None and km else None,
         "co2_per_order": rnd(co2 / assigned, 4) if co2 is not None and assigned else None,
+        "cost_per_order_vnd": round((op + energy) / assigned) if energy is not None and assigned else None,
         "warnings": warnings,
     }
 
 
 def baseline(orders, vehicles, matrix, cfg) -> dict:
-    """Baseline (mục 6.3), defined explicitly: orders in input sequence, vehicles in input
-    sequence; append each order to the current vehicle while feasible, else move to the next.
-    Same orders, fleet, matrix and constraints as the optimiser."""
+    """Baseline (mục 6.3), defined explicitly — "first fit in input order": take orders in
+    input sequence and append each to the first vehicle (in fleet list order) that can still
+    take it at the end of its route. No reordering. Same orders, fleet, matrix and constraints
+    as the optimiser."""
     t0 = time.perf_counter()
     vs = prepare_vehicles(vehicles, cfg, DEFAULT_WEIGHTS)
     prob = Problem(orders, matrix, DEFAULT_WEIGHTS)
     routes = [[] for _ in vs]
-    pending, r = [], 0
+    pending = []
     for oi in range(len(orders)):
-        for k in range(r, len(vs)):
+        for k in range(len(vs)):
             if prob.evaluate(vs[k], routes[k] + [oi]):
                 routes[k].append(oi)
-                r = k
                 break
         else:
             pending.append(oi)
     return build_result(routes, vs, prob, cfg, pending, vehicles, {
-        "algorithm": "baseline: thứ tự đơn gốc, lấp đầy xe tuần tự",
+        "algorithm": "baseline: thứ tự đơn gốc, xếp vào xe đầu tiên còn chỗ (first-fit)",
         "time_ms": round((time.perf_counter() - t0) * 1000), "status": "BASELINE",
     })

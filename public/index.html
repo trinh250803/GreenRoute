@@ -8,187 +8,237 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- ===== Login / change password ===== -->
   <div id="login-screen" class="login-screen" hidden>
     <form id="login-form" class="login-box">
-      <h2>🌿 GreenRoute AI</h2>
-      <input name="username" placeholder="Tên đăng nhập" autocomplete="username" required>
-      <input name="password" type="password" placeholder="Mật khẩu" autocomplete="current-password" required>
+      <h2><span class="brand-logo">🌿</span> GreenRoute AI</h2>
+      <p class="hint" style="margin:0">Tối ưu giao hàng chặng cuối đa phương tiện</p>
+      <label class="field">Tên đăng nhập<input name="username" autocomplete="username" required></label>
+      <label class="field">Mật khẩu<input name="password" type="password" autocomplete="current-password" required></label>
       <button>Đăng nhập</button>
-      <div id="login-error" class="err" hidden></div>
+      <div id="login-error" class="alert err" hidden></div>
     </form>
     <form id="pw-form" class="login-box" hidden>
       <h2>Đổi mật khẩu</h2>
-      <p class="hint">Bạn cần đặt mật khẩu mới trước khi sử dụng (tối thiểu 8 ký tự).</p>
-      <input name="old_password" type="password" placeholder="Mật khẩu hiện tại" autocomplete="current-password" required>
-      <input name="new_password" type="password" placeholder="Mật khẩu mới" autocomplete="new-password" required minlength="8">
-      <input name="confirm" type="password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required minlength="8">
+      <p class="hint" style="margin:0">Tối thiểu 8 ký tự.</p>
+      <label class="field">Mật khẩu hiện tại<input name="old_password" type="password" autocomplete="current-password" required></label>
+      <label class="field">Mật khẩu mới<input name="new_password" type="password" autocomplete="new-password" required minlength="8"></label>
+      <label class="field">Nhập lại mật khẩu mới<input name="confirm" type="password" autocomplete="new-password" required minlength="8"></label>
       <button>Lưu mật khẩu</button>
-      <div id="pw-error" class="err" hidden></div>
+      <div id="pw-error" class="alert err" hidden></div>
     </form>
   </div>
 
-  <header>
-    <div class="topbar">
-      <h1>🌿 GreenRoute AI <small>Tối ưu giao hàng chặng cuối đa phương tiện</small></h1>
-      <div class="userbox"><span id="who"></span> <button id="btn-pw" class="secondary">Đổi mật khẩu</button> <button id="btn-logout" class="secondary">Đăng xuất</button></div>
+  <div class="app">
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-logo">🌿</span><div>GreenRoute AI<small>Last-mile · Multi-vehicle</small></div></div>
+      <nav class="menu" id="menu"></nav>
+      <div class="usercard">
+        <div class="who"><div class="avatar" id="avatar"></div><div><div class="name" id="who-name"></div><div class="role" id="who-role"></div></div></div>
+        <div class="row"><button id="btn-pw">Đổi mật khẩu</button><button id="btn-logout">Đăng xuất</button></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button id="menu-toggle" class="secondary sm" aria-label="Menu">☰</button>
+        <div><h1 id="page-title"></h1><div class="sub" id="page-sub"></div></div>
+        <div class="actions" id="page-actions"></div>
+      </header>
+      <div id="banner" class="alert warn banner" hidden></div>
+
+      <div class="content">
+        <!-- ===== Overview ===== -->
+        <section class="page" id="page-overview">
+          <div class="card">
+            <div class="card-h"><h3>Quy trình hôm nay</h3><span class="right hint" id="ov-updated"></span></div>
+            <div class="steps" id="ov-steps"></div>
+          </div>
+          <div class="kpis" id="ov-kpis"></div>
+          <div class="grid cols-2">
+            <div class="card"><div class="card-h"><h3>Tiến độ theo xe</h3><div class="right"><button class="secondary sm" data-go="live">Xem bản đồ trực tiếp →</button></div></div><div id="ov-progress"></div></div>
+            <div class="card"><div class="card-h"><h3>Cần chú ý</h3></div><div id="ov-alerts" class="list"></div></div>
+          </div>
+        </section>
+
+        <!-- ===== Plan ===== -->
+        <section class="page" id="page-plan">
+          <div class="card" data-roles="admin,dispatcher">
+            <div class="toolbar">
+              <label class="field">Kho xuất phát<input id="depot-name" placeholder="Tên kho" style="width:200px"></label>
+              <label class="field">Vĩ độ<input id="depot-lat" style="width:110px"></label>
+              <label class="field">Kinh độ<input id="depot-lng" style="width:120px"></label>
+              <button id="btn-depot" class="secondary">Lưu kho</button>
+              <span class="grow"></span>
+              <label class="field" title="Quy đổi 1 kg CO₂ thành chi phí khi tối ưu (chờ chủ dự án duyệt)">Giá CO₂ (VND/kg)<input id="w-co2" type="number" min="0" style="width:110px"></label>
+              <label class="field">Thời gian giải (giây)<input id="time-limit" type="number" min="1" max="60" style="width:110px"></label>
+              <button id="btn-run" class="lg">▶ Chạy tối ưu</button>
+              <button id="btn-publish" class="lg secondary" disabled>📤 Phát hành cho tài xế</button>
+            </div>
+            <div id="publish-msg" style="margin-top:10px"></div>
+          </div>
+          <div id="plan-empty" class="card empty"><div class="big">🗺️</div><p>Chưa có phương án. Bấm <b>Chạy tối ưu</b> để OR-Tools phân đơn cho đội xe.</p></div>
+          <div id="plan-body" hidden style="display:flex;flex-direction:column;gap:16px">
+            <div class="kpis" id="kpis"></div>
+            <div class="grid map-side">
+              <div class="card"><div class="card-h"><h3>Bản đồ tuyến</h3><span class="right hint">Nét đứt = xe điện · Chấm đỏ = chưa phân công</span></div><div id="map" class="map"></div></div>
+              <div class="card">
+                <div class="card-h"><div class="seg" id="plan-seg"><button class="active" data-v="routes">Tuyến theo xe</button><button data-v="compare">So sánh baseline</button><button data-v="unassigned">Chưa phân công <span id="un-count"></span></button></div></div>
+                <div id="plan-v-routes" class="list" style="max-height:520px;overflow:auto"></div>
+                <div id="plan-v-compare" hidden></div>
+                <div id="plan-v-unassigned" hidden></div>
+              </div>
+            </div>
+            <div id="run-warnings" class="list"></div>
+          </div>
+        </section>
+
+        <!-- ===== Live ===== -->
+        <section class="page" id="page-live">
+          <div class="grid map-side">
+            <div class="card"><div class="card-h"><h3><span class="live-dot"></span> Vị trí đội xe</h3><span class="right hint" id="live-updated"></span></div><div id="live-map" class="map tall"></div></div>
+            <div class="card">
+              <div class="card-h"><h3>Xe đang chạy</h3><div class="right"><span id="live-counts"></span></div></div>
+              <div id="live-list" class="list" style="max-height:calc(100vh - 260px);overflow:auto"></div>
+            </div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Chi tiết giao hàng</h3><div class="right"><button class="secondary sm" id="btn-live-refresh">↻ Làm mới</button></div></div><div id="dispatch"></div></div>
+        </section>
+
+        <!-- ===== Orders ===== -->
+        <section class="page" id="page-orders">
+          <div class="card">
+            <div class="toolbar">
+              <label class="field grow">Tìm kiếm<input id="orders-search" placeholder="Mã đơn, khách hàng, địa chỉ, SĐT…"></label>
+              <span data-roles="admin,dispatcher" style="display:contents">
+                <label class="field">Nhập CSV/XLSX<input type="file" id="orders-file" accept=".csv,.xlsx"></label>
+                <label class="field">Chế độ<select id="orders-mode"><option value="replace">Thay thế toàn bộ</option><option value="append">Thêm vào</option></select></label>
+                <button id="btn-orders-import" class="secondary">⬆ Nhập file</button>
+                <button id="btn-orders-clear" class="danger">Xóa tất cả</button>
+              </span>
+            </div>
+            <div id="orders-report" style="margin-top:10px"></div>
+          </div>
+          <details class="card" data-roles="admin,dispatcher"><summary>Thêm đơn thủ công</summary>
+            <form id="order-form" class="form-grid">
+              <label class="field">Mã đơn *<input name="order_id" required></label>
+              <label class="field">Khách hàng<input name="customer_name"></label>
+              <label class="field">Số điện thoại<input name="phone"></label>
+              <label class="field">Địa chỉ<input name="address"></label>
+              <label class="field">Vĩ độ *<input name="latitude"></label>
+              <label class="field">Kinh độ *<input name="longitude"></label>
+              <label class="field">Khối lượng (kg)<input name="weight_kg"></label>
+              <label class="field">Thể tích (m³)<input name="volume_m3"></label>
+              <label class="field">Giao từ (HH:MM)<input name="delivery_window_start"></label>
+              <label class="field">Giao đến (HH:MM)<input name="delivery_window_end"></label>
+              <label class="field">Thời gian dừng (phút)<input name="service_time_min"></label>
+              <label class="field">Ưu tiên<select name="priority"><option value="0">Thường</option><option value="1">Ưu tiên</option></select></label>
+              <label class="field">Ghi chú<input name="note"></label>
+              <button>Lưu đơn</button>
+            </form>
+          </details>
+          <div class="card"><div class="card-h"><h3 id="orders-count">Đơn hàng</h3></div><div id="orders-table"></div></div>
+        </section>
+
+        <!-- ===== Vehicles ===== -->
+        <section class="page" id="page-vehicles">
+          <div class="card" data-roles="admin,fleet_manager">
+            <div class="toolbar">
+              <label class="field">Nhập CSV/XLSX<input type="file" id="vehicles-file" accept=".csv,.xlsx"></label>
+              <label class="field">Chế độ<select id="vehicles-mode"><option value="replace">Thay thế toàn bộ</option><option value="append">Thêm vào</option></select></label>
+              <button id="btn-vehicles-import" class="secondary">⬆ Nhập file</button>
+            </div>
+            <div id="vehicles-report" style="margin-top:10px"></div>
+          </div>
+          <details class="card" data-roles="admin,fleet_manager"><summary>Thêm / sửa xe (trùng mã xe sẽ cập nhật)</summary>
+            <form id="vehicle-form" class="form-grid">
+              <label class="field">Mã xe *<input name="vehicle_id" required></label>
+              <label class="field">Loại xe<select name="vehicle_type" id="vf-type"></select></label>
+              <label class="field">Nhiên liệu<select name="fuel_blend_code" id="vf-fuel"></select></label>
+              <label class="field">Tải trọng (kg) *<input name="capacity_weight_kg"></label>
+              <label class="field">Thể tích (m³)<input name="capacity_volume_m3"></label>
+              <label class="field">Chi phí vận hành (VND/km) *<input name="cost_per_km"></label>
+              <label class="field">Chi phí cố định/ngày<input name="fixed_cost_vnd"></label>
+              <label class="field">Tiêu hao (/100 km)<input name="consumption_rate"></label>
+              <label class="field">Giá năng lượng (trống = mặc định)<input name="fuel_price"></label>
+              <label class="field">Hệ số phát thải tùy chỉnh<input name="emission_factor_value"></label>
+              <label class="field">Nguồn hệ số<input name="factor_source"></label>
+              <label class="field">Bắt đầu ca<input name="start_time" placeholder="07:00"></label>
+              <label class="field">Kết thúc ca<input name="end_time" placeholder="19:00"></label>
+              <label class="check"><input type="checkbox" name="available" checked> Sẵn sàng</label>
+              <label class="check"><input type="checkbox" name="confirm_simulation_fuel"> Xác nhận nhiên liệu mô phỏng</label>
+              <button>Lưu xe</button>
+            </form>
+          </details>
+          <div class="card"><div class="card-h"><h3 id="vehicles-count">Đội xe</h3></div><div id="vehicles-table"></div></div>
+        </section>
+
+        <!-- ===== Fuel scenarios ===== -->
+        <section class="page" id="page-fuel">
+          <div class="alert info">Đổi nhiên liệu / tiêu hao / giá cho từng xe của <b>phương án đang mở</b> rồi chạy kịch bản. <b>Cùng tuyến</b>: giữ nguyên đường đi để thấy riêng tác động của nhiên liệu. <b>Tối ưu lại</b>: OR-Tools lập lại tuyến.</div>
+          <div class="card"><div class="card-h"><h3>Cấu hình kịch bản</h3></div>
+            <div id="fuel-editor"></div>
+            <div class="toolbar" style="margin-top:12px">
+              <label class="field">Tên kịch bản<input id="sc-name" placeholder="VD: Chuyển van sang diesel"></label>
+              <label class="field">Chế độ<select id="sc-mode"><option value="same_route">Cùng tuyến</option><option value="reoptimize">Tối ưu lại tuyến</option></select></label>
+              <button id="btn-scenario">▶ Chạy kịch bản</button>
+            </div>
+          </div>
+          <div id="scenario-result"></div>
+        </section>
+
+        <!-- ===== History ===== -->
+        <section class="page" id="page-history"><div class="card"><div id="history"></div></div></section>
+
+        <!-- ===== Admin ===== -->
+        <section class="page" id="page-admin">
+          <div class="seg" id="admin-seg">
+            <button data-sub="users" class="active">👥 Tài khoản &amp; phân quyền</button>
+            <button data-sub="config">⚙️ Hệ số, giá &amp; trọng số</button>
+            <button data-sub="data">🗂 Dữ liệu mẫu</button>
+            <button data-sub="audit">📜 Nhật ký</button>
+          </div>
+          <div id="sub-users" class="sub active">
+            <details class="card" open><summary>Tạo tài khoản</summary>
+              <form id="user-form" class="form-grid">
+                <label class="field">Tên đăng nhập *<input name="username" required></label>
+                <label class="field">Họ tên<input name="full_name"></label>
+                <label class="field">Vai trò<select name="role" id="uf-role"></select></label>
+                <label class="field">Xe (cho tài xế)<select name="vehicle_id" id="uf-vehicle"></select></label>
+                <label class="field">Mật khẩu tạm (≥ 8 ký tự) *<input name="password" required minlength="8"></label>
+                <button>Tạo tài khoản</button>
+              </form>
+              <p class="hint">Người dùng mới phải đổi mật khẩu tạm ở lần đăng nhập đầu. Mỗi xe chỉ gán cho một tài xế đang hoạt động.</p>
+            </details>
+            <div id="user-msg"></div>
+            <div class="card"><div id="users"></div></div>
+          </div>
+          <div id="sub-config" class="sub">
+            <div class="alert info">Mỗi lần lưu tạo phiên bản cấu hình mới và ghi lịch sử (người sửa, thời điểm, giá trị cũ → mới, lý do). Các lần tối ưu đã chạy giữ nguyên phiên bản cũ.</div>
+            <div class="card" id="config-editor"></div>
+            <div class="card"><div class="toolbar">
+              <label class="field grow">Lý do / nguồn / quyết định phê duyệt *<input id="cfg-reason"></label>
+              <button id="btn-cfg-save">Lưu phiên bản mới</button>
+            </div><div id="cfg-msg" style="margin-top:10px"></div></div>
+            <div class="card"><div class="card-h"><h3>Lịch sử phiên bản</h3></div><div id="config-history"></div></div>
+          </div>
+          <div id="sub-data" class="sub">
+            <div class="card">
+              <div class="card-h"><h3>Nạp dữ liệu minh họa</h3></div>
+              <p class="hint">Thay toàn bộ kho, đơn hàng và đội xe hiện có bằng bộ dữ liệu giả lập (có nhãn “minh họa”). Tài khoản người dùng được giữ nguyên.</p>
+              <div class="toolbar"><label class="field grow">Bộ dữ liệu<select id="dataset"></select></label><button id="btn-sample">Nạp dữ liệu</button></div>
+            </div>
+          </div>
+          <div id="sub-audit" class="sub"><div class="card"><div id="audit"></div></div></div>
+        </section>
+
+        <!-- ===== Method ===== -->
+        <section class="page" id="page-method"><div class="card method" id="method"></div></section>
+      </div>
     </div>
-    <div id="banner" class="banner" hidden></div>
-    <nav>
-      <button data-tab="dashboard" class="active">Dashboard &amp; Bản đồ</button>
-      <button data-tab="dispatch">Theo dõi giao hàng</button>
-      <button data-tab="orders" data-roles="admin,dispatcher,ops_manager">Đơn hàng</button>
-      <button data-tab="vehicles">Đội xe</button>
-      <button data-tab="fuel">Kịch bản nhiên liệu</button>
-      <button data-tab="history">Lịch sử &amp; Báo cáo</button>
-      <button data-tab="admin" data-roles="admin">Quản trị</button>
-      <button data-tab="method">Phương pháp &amp; Giả định</button>
-    </nav>
-  </header>
-
-  <main>
-    <section id="tab-dashboard" class="tab active">
-      <div class="toolbar">
-        <button id="btn-sample" class="secondary" data-roles="admin">Nạp dữ liệu minh họa</button>
-        <label>Kho: <input id="depot-name" placeholder="Tên kho" size="14"> <input id="depot-lat" placeholder="lat" size="8"> <input id="depot-lng" placeholder="lng" size="9"></label>
-        <button id="btn-depot" class="secondary" data-roles="admin,dispatcher">Lưu kho</button>
-        <span data-roles="admin,dispatcher">
-          <label>Giá CO₂ quy đổi (VND/kg): <input id="w-co2" type="number" value="0" min="0" style="width:80px"></label>
-          <label>Giới hạn (s): <input id="time-limit" type="number" value="5" min="1" max="60" style="width:50px"></label>
-          <button id="btn-run">▶ Chạy tối ưu</button>
-          <button id="btn-publish" class="secondary" disabled>📤 Phát hành cho tài xế</button>
-        </span>
-      </div>
-      <div id="publish-msg"></div>
-      <div id="kpis" class="kpis"></div>
-      <div class="grid2">
-        <div id="map"></div>
-        <div>
-          <h3>So sánh Baseline ↔ Tối ưu</h3>
-          <div id="comparison"></div>
-          <h3>Đơn chưa phân công</h3>
-          <div id="unassigned"></div>
-        </div>
-      </div>
-      <h3>Tuyến theo xe</h3>
-      <div id="routes"></div>
-      <div id="run-warnings"></div>
-    </section>
-
-    <section id="tab-orders" class="tab">
-      <div class="toolbar">
-        <label data-roles="admin,dispatcher">Nhập CSV/XLSX: <input type="file" id="orders-file" accept=".csv,.xlsx"></label>
-        <select id="orders-mode" data-roles="admin,dispatcher"><option value="replace">Thay thế</option><option value="append">Thêm vào</option></select>
-        <button id="btn-orders-import" data-roles="admin,dispatcher">Nhập</button>
-        <button id="btn-orders-clear" class="danger" data-roles="admin,dispatcher">Xóa tất cả</button>
-      </div>
-      <details data-roles="admin,dispatcher"><summary>➕ Thêm đơn thủ công</summary>
-        <form id="order-form" class="form-grid">
-          <input name="order_id" placeholder="order_id *" required>
-          <input name="address" placeholder="Địa chỉ">
-          <input name="latitude" placeholder="latitude *">
-          <input name="longitude" placeholder="longitude *">
-          <input name="weight_kg" placeholder="weight_kg">
-          <input name="volume_m3" placeholder="volume_m3">
-          <input name="delivery_window_start" placeholder="Giờ bắt đầu HH:MM">
-          <input name="delivery_window_end" placeholder="Giờ kết thúc HH:MM">
-          <input name="service_time_min" placeholder="service_time_min">
-          <input name="priority" placeholder="priority">
-          <button>Lưu đơn</button>
-        </form>
-      </details>
-      <div id="orders-report"></div>
-      <div id="orders-table"></div>
-    </section>
-
-    <section id="tab-vehicles" class="tab">
-      <div class="toolbar">
-        <label data-roles="admin,fleet_manager">Nhập CSV/XLSX: <input type="file" id="vehicles-file" accept=".csv,.xlsx"></label>
-        <select id="vehicles-mode" data-roles="admin,fleet_manager"><option value="replace">Thay thế</option><option value="append">Thêm vào</option></select>
-        <button id="btn-vehicles-import" data-roles="admin,fleet_manager">Nhập</button>
-      </div>
-      <details data-roles="admin,fleet_manager"><summary>➕ Thêm / sửa xe (trùng vehicle_id sẽ cập nhật)</summary>
-        <form id="vehicle-form" class="form-grid">
-          <input name="vehicle_id" placeholder="vehicle_id *" required>
-          <select name="vehicle_type" id="vf-type"></select>
-          <select name="fuel_blend_code" id="vf-fuel"></select>
-          <input name="capacity_weight_kg" placeholder="Tải trọng kg *">
-          <input name="capacity_volume_m3" placeholder="Thể tích m³">
-          <input name="cost_per_km" placeholder="Chi phí vận hành VND/km *">
-          <input name="fixed_cost_vnd" placeholder="Chi phí cố định/ngày">
-          <input name="consumption_rate" placeholder="Tiêu hao L hoặc kWh /100km">
-          <input name="fuel_price" placeholder="Giá năng lượng (trống = mặc định)">
-          <input name="emission_factor_value" placeholder="Hệ số phát thải tùy chỉnh">
-          <input name="factor_source" placeholder="Nguồn hệ số">
-          <input name="start_time" placeholder="Bắt đầu ca 07:00">
-          <input name="end_time" placeholder="Kết thúc ca 19:00">
-          <label><input type="checkbox" name="available" checked> Sẵn sàng</label>
-          <label><input type="checkbox" name="confirm_simulation_fuel"> Xác nhận nhiên liệu mô phỏng</label>
-          <button>Lưu xe</button>
-        </form>
-      </details>
-      <div id="vehicles-report"></div>
-      <div id="vehicles-table"></div>
-    </section>
-
-    <section id="tab-fuel" class="tab">
-      <p class="hint">Chọn nhiên liệu/tiêu hao/giá thay thế cho từng xe của <b>lần tối ưu gần nhất</b>, rồi chạy kịch bản. Chế độ <b>Cùng tuyến</b> cô lập tác động nhiên liệu; <b>Tối ưu lại tuyến</b> chạy lại bộ giải.</p>
-      <div id="fuel-editor"></div>
-      <div class="toolbar">
-        <input id="sc-name" placeholder="Tên kịch bản">
-        <select id="sc-mode"><option value="same_route">Cùng tuyến</option><option value="reoptimize">Tối ưu lại tuyến</option></select>
-        <button id="btn-scenario">▶ Chạy kịch bản</button>
-      </div>
-      <div id="scenario-result"></div>
-    </section>
-
-    <section id="tab-history" class="tab">
-      <div id="history"></div>
-    </section>
-
-    <section id="tab-dispatch" class="tab">
-      <div class="toolbar"><button id="btn-dispatch-refresh" class="secondary">↻ Làm mới</button><span class="hint">Tự làm mới mỗi 30 giây</span></div>
-      <div id="dispatch"></div>
-    </section>
-
-    <section id="tab-admin" class="tab">
-      <nav class="subnav">
-        <button data-sub="users" class="active">Tài khoản &amp; phân quyền</button>
-        <button data-sub="config">Hệ số, giá &amp; trọng số</button>
-        <button data-sub="audit">Nhật ký hệ thống</button>
-      </nav>
-      <div id="sub-users" class="sub active">
-        <details open><summary>➕ Tạo tài khoản</summary>
-          <form id="user-form" class="form-grid">
-            <input name="username" placeholder="Tên đăng nhập *" required>
-            <input name="full_name" placeholder="Họ tên">
-            <select name="role" id="uf-role"></select>
-            <select name="vehicle_id" id="uf-vehicle"><option value="">— Xe (cho tài xế) —</option></select>
-            <input name="password" type="text" placeholder="Mật khẩu tạm (≥ 8 ký tự) *" required minlength="8">
-            <button>Tạo</button>
-          </form>
-          <p class="hint">Người dùng phải đổi mật khẩu tạm ở lần đăng nhập đầu tiên. Mỗi xe chỉ gán cho một tài xế đang hoạt động.</p>
-        </details>
-        <div id="user-msg"></div>
-        <div id="users"></div>
-      </div>
-      <div id="sub-config" class="sub">
-        <p class="hint">Mọi thay đổi tạo phiên bản cấu hình mới và được ghi vào lịch sử (người sửa, thời điểm, giá trị cũ/mới, lý do). Các lần tối ưu đã chạy vẫn giữ phiên bản cũ.</p>
-        <div id="config-editor"></div>
-        <div class="toolbar">
-          <input id="cfg-reason" placeholder="Lý do / nguồn / quyết định phê duyệt (bắt buộc)" style="flex:1;min-width:280px">
-          <button id="btn-cfg-save">Lưu thay đổi</button>
-        </div>
-        <div id="cfg-msg"></div>
-        <h3>Lịch sử phiên bản</h3>
-        <div id="config-history"></div>
-      </div>
-      <div id="sub-audit" class="sub"><div id="audit"></div></div>
-    </section>
-
-    <section id="tab-method" class="tab">
-      <div id="method"></div>
-    </section>
-  </main>
+  </div>
+  <div class="toasts" id="toasts"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="auth.js"></script>

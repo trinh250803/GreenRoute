@@ -1,0 +1,13 @@
+vehicle_id,vehicle_type,capacity_weight_kg,capacity_volume_m3,cost_per_km,fixed_cost_vnd,fuel_blend_code,consumption_rate,fuel_price,available,start_time,end_time
+MOTO-01,motorbike_petrol,60,0.25,1500,50000,E5,2.2,,true,07:30,19:00
+MOTO-02,motorbike_petrol,60,0.25,1500,50000,E10,2.3,,true,07:30,19:00
+MOTO-03,motorbike_petrol,60,0.25,1500,50000,E5,2.2,,true,07:30,19:00
+MOTO-04,motorbike_petrol,60,0.25,1500,50000,E10,2.3,,true,07:30,19:00
+MOTO-05,motorbike_petrol,60,0.25,1500,50000,E5,2.1,,false,07:30,19:00
+EMOTO-01,motorbike_electric,45,0.2,1200,50000,electricity,3.0,,true,07:30,19:00
+EMOTO-02,motorbike_electric,45,0.2,1200,50000,electricity,3.0,,true,07:30,19:00
+EMOTO-03,motorbike_electric,45,0.2,1200,50000,electricity,3.2,,true,07:30,19:00
+VAN-01,van,600,3,4000,200000,E10,9.5,,true,07:00,19:00
+VAN-02,van,650,3.2,4200,200000,diesel,8.5,,true,07:00,19:00
+EVAN-01,ev_van,500,3,3500,220000,electricity,20,,true,07:00,19:00
+TRUCK-01,small_truck,1500,8,6000,350000,diesel,12,,true,07:00,19:00

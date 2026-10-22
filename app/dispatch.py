@@ -98,8 +98,7 @@ def driver_route(user: dict) -> dict:
         return {"route": None, "message": f'Xe {user["vehicle_id"]} không có tuyến trong kế hoạch đang phát hành'}
     orders = {o["order_id"]: o for o in run["input"]["orders"]}
     deliveries = run.get("deliveries", {})
-    stops = [{**s, "address": orders[s["order_id"]]["address"], "weight_kg": orders[s["order_id"]]["weight_kg"],
-              "service_time_min": orders[s["order_id"]]["service_time_min"],
+    stops = [{**s, **{k: orders[s["order_id"]].get(k) for k in ("address", "weight_kg", "service_time_min", "customer_name", "phone", "note")},
               **deliveries.get(s["order_id"], {"status": "pending"})} for s in route["stops"]]
     return {"route": {"run_id": run["id"], "published_at": board["published_at"], "vehicle_id": route["vehicle_id"],
                       "start": route["start"], "end": route["end"], "distance_km": route["distance_km"], "depot": run["depot"], "stops": stops},

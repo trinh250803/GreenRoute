@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from . import auth, dispatch, seed, store
+from . import auth, dispatch, seed, store, tracking
 from .admin_config import update_config
 from .auth import ROLES, STAFF, AuthError, audit, require
 from .compare import compare_totals, run_fuel_scenario
@@ -309,17 +309,28 @@ def delete_vehicle(vehicle_id: str, user=Depends(FLEET_WRITE)):
 
 
 # ---------- Sample data (synthetic, labelled) ----------
+SAMPLE_DATASETS = {"small": "sample", "hcm": "sample_hcm"}
+
+
+@app.get("/api/sample/datasets")
+def sample_datasets(user=Depends(ADMIN)):
+    return {"small": "Nhỏ — 42 đơn quanh Quận 1, 8 xe (dùng cho test tự động)",
+            "hcm": "TP.HCM — 150 đơn ở 14 quận, 12 xe, có tên khách & SĐT giả lập"}
+
+
 @app.post("/api/sample/load")
-def load_sample(user=Depends(ADMIN)):
-    d = ROOT / "data" / "sample"
+def load_sample(dataset: str = "hcm", user=Depends(ADMIN)):
+    if dataset not in SAMPLE_DATASETS:
+        raise ApiError(400, f"Bộ dữ liệu không hợp lệ ({', '.join(SAMPLE_DATASETS)})")
+    d = ROOT / "data" / SAMPLE_DATASETS[dataset]
     with store.lock:
         db = store.load()
         db["depot"] = json.loads((d / "depot.json").read_text(encoding="utf-8"))
-        audit(db, user["username"], "load_sample")
+        audit(db, user["username"], "load_sample", {"dataset": dataset})
         store.save(db)
     o = upsert_orders(parse_csv((d / "orders.csv").read_text(encoding="utf-8")), "replace")
     v = upsert_vehicles(parse_csv((d / "vehicles.csv").read_text(encoding="utf-8")), "replace")
-    return {"orders": o, "vehicles": v, "label": "Dữ liệu minh họa (synthetic)"}
+    return {"orders": o, "vehicles": v, "dataset": dataset, "label": "Dữ liệu minh họa (synthetic)"}
 
 
 # ---------- Optimization (F-05, F-06, F-07) ----------
@@ -362,7 +373,7 @@ async def run_optimization(request: Request, user=Depends(PLANNER)):
     }
     with store.lock:
         db = store.load()
-        db["runs"] = [run, *db["runs"]][:50]
+        db["runs"] = [run, *db["runs"]][:20]
         audit(db, user["username"], "run_optimization", {"run_id": run["id"], "orders": len(run["input"]["orders"]), "config_version": cfg["version"]})
         store.save(db)
     return run
@@ -422,7 +433,22 @@ def dispatch_board(user=Depends(ANY_STAFF)):
 
 @app.get("/api/driver/route")
 def driver_route(user=Depends(DRIVER)):
-    return dispatch.driver_route(user)
+    return {**dispatch.driver_route(user), "tracking": tracking.driver_state(user)}
+
+
+@app.post("/api/driver/sharing")
+async def driver_sharing(request: Request, user=Depends(DRIVER)):
+    return tracking.set_sharing(user, bool((await body_json(request)).get("on")))
+
+
+@app.post("/api/driver/location")
+async def driver_location(request: Request, user=Depends(DRIVER)):
+    return tracking.record_points(user, await body_json(request))
+
+
+@app.get("/api/tracking")
+def tracking_board(user=Depends(ANY_STAFF)):
+    return tracking.board(store.load())
 
 
 @app.post("/api/driver/stops/{order_id}")

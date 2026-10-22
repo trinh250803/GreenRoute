@@ -31,6 +31,9 @@
 | A11 | Chưa có Docker và hướng dẫn triển khai, backup/khôi phục | 8, 10, 12 | ⏳ |
 | A12 | Chưa có geocoding (đơn chỉ có địa chỉ bị báo lỗi) | 3.2 bước 3, 5.1 | ⏳ Cần chọn nhà cung cấp và chi phí (B5) |
 | A13 | ML dự đoán thời gian | F-08, G4 | ⏳ Chờ dữ liệu thật; A7 bắt đầu thu thập |
+| A14 | Không biết tài xế đang ở đâu, di chuyển thế nào | F-10 (đưa lên sớm theo yêu cầu) | ✅ Tài xế bấm *Bắt đầu ca* → gửi vị trí mỗi 20 giây (có bộ đệm khi mất mạng); điều phối viên xem bản đồ trực tiếp: vị trí, vệt đường, km đã đi, điểm tiếp theo, cảnh báo mất tín hiệu. ⚠ Chỉ chạy khi trang tài xế đang mở — theo dõi nền cần app di động (B11) |
+| A15 | Xác nhận vị trí khi giao | Chống khai khống | ✅ So GPS lúc báo giao với tọa độ đơn; ngưỡng do admin cấu hình |
+| A16 | Giao diện khó dùng, chưa theo quy trình | Mục 3.2 | ✅ Menu theo vai trò, trang Tổng quan 5 bước, trang tài xế tối ưu cho điện thoại; kiểm thử bằng trình duyệt tự động (`scripts/e2e_ui.py`) |
 
 ## 3. Gap tài liệu (B): cần chủ dự án chốt
 
@@ -46,3 +49,5 @@
 | B8 | Thời gian lưu dữ liệu khách hàng và lịch sử giao hàng | Chưa có chính sách xóa/ẩn danh |
 | B9 | Nhiều kho, nhiều chuyến/ngày cho một xe | Ngoài MVP (tài liệu ghi "một kho") |
 | B10 | Mức phạt giao trễ (ràng buộc mềm) | Hiện khung giờ là ràng buộc cứng |
+| B11 | Có cần app di động (Android/iOS) để theo dõi khi tắt màn hình không? | Hiện là web app; trình duyệt dừng GPS khi khóa màn hình |
+| B12 | Có cần thông báo pháp lý/đồng ý của tài xế về việc thu thập vị trí không? | Hiện tài xế chủ động bật/tắt; chỉ thu thập trong ca, lưu 24 giờ |

@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -36,7 +38,7 @@ def make_user(client, admin, username, role, vehicle_id=None):
 @pytest.fixture(scope="module")
 def admin(client):
     h = login(client, "admin", ADMIN_PW)
-    assert client.post("/api/sample/load", headers=h).json()["orders"]["imported"] == 42
+    assert client.post("/api/sample/load?dataset=small", headers=h).json()["orders"]["imported"] == 42
     return h
 
 
@@ -133,3 +135,23 @@ def test_invalid_import_writes_nothing(client, admin):
     before = len(client.get("/api/orders", headers=admin).json())
     assert client.post("/api/orders", headers=admin, json={"order_id": "DH001", "address": "x"}).status_code == 422
     assert len(client.get("/api/orders", headers=admin).json()) == before
+
+
+def test_live_tracking(client, admin):
+    drv = make_user(client, admin, "driver_track", "driver", "TRUCK-01")
+    ping = {"latitude": 10.78, "longitude": 106.70, "accuracy_m": 12, "ts": 0}
+    # No tracking without the driver's explicit consent.
+    assert client.post("/api/driver/location", headers=drv, json=ping).status_code == 409
+    assert client.post("/api/driver/sharing", headers=drv, json={"on": True}).json()["sharing"] is True
+    t0 = time.time() * 1000 - 300_000
+    pts = [{"latitude": 10.78 + i * 0.001, "longitude": 106.70, "accuracy_m": 10, "ts": t0 + i * 30_000} for i in range(5)]
+    assert client.post("/api/driver/location", headers=drv, json={"points": pts}).json()["stored"] == 5
+    assert client.post("/api/driver/location", headers=drv, json={"latitude": 999, "longitude": 0}).status_code == 400
+    board = client.get("/api/tracking", headers=admin).json()
+    truck = next(v for v in board["vehicles"] if v["vehicle_id"] == "TRUCK-01")
+    assert truck["sharing"] and truck["last"]["lat"] == 10.784 and not truck["stale"]
+    assert len(truck["trail"]) == 5 and truck["trail_km"] > 0.3
+    assert client.get("/api/tracking", headers=drv).status_code == 403
+    client.post("/api/driver/sharing", headers=drv, json={"on": False})
+    assert client.post("/api/driver/location", headers=drv, json=ping).status_code == 409
+    assert client.get("/api/driver/route", headers=drv).json()["tracking"]["sharing"] is False

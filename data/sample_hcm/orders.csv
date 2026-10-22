@@ -1,0 +1,152 @@
+order_id,customer_name,phone,address,latitude,longitude,weight_kg,volume_m3,delivery_window_start,delivery_window_end,service_time_min,priority,note
+HCM001,Phạm Ngọc Thảo,0120651673,"285 Lê Văn Sỹ, Quận 3 (minh họa)",10.78997,106.68536,2.3,0.016,09:00,12:00,10,0,Hàng dễ vỡ
+HCM002,Đặng Thị Nhung,0120012046,"418 Châu Văn Liêm, Quận 5 (minh họa)",10.75723,106.65818,4.8,0.059,,,5,0,Không giao trưa 12h–13h
+HCM003,Đặng Thanh Nhung,0120147732,"449 Phan Đình Phùng, Phú Nhuận (minh họa)",10.7915,106.68357,5.5,0.037,,,5,0,Không giao trưa 12h–13h
+HCM004,Lý Quốc Phúc,0120271207,"433 Tô Hiến Thành, Quận 10 (minh họa)",10.77562,106.67472,1.7,0.016,09:00,12:00,6,0,
+HCM005,Phạm Gia Nam,0120492873,"73 Thoại Ngọc Hầu, Tân Phú (minh họa)",10.79769,106.63529,49.8,0.62,09:00,12:00,8,0,Không giao trưa 12h–13h
+HCM006,Lý Quốc Nam,0120212369,"151 An Dương Vương, Quận 5 (minh họa)",10.74517,106.6571,2.7,0.019,,,10,0,Hàng dễ vỡ
+HCM007,Lý Hoàng Phúc,0120803946,"424 Lê Văn Lương, Quận 7 (minh họa)",10.74262,106.72312,2.7,0.017,16:00,19:00,5,0,
+HCM008,Võ Hoàng Hà,0120446459,"432 Tô Hiến Thành, Quận 10 (minh họa)",10.78164,106.66938,9.3,0.035,09:00,12:00,4,0,Để ở bảo vệ tòa nhà
+HCM009,Nguyễn Hoàng Tâm,0120573141,"429 Võ Văn Tần, Quận 3 (minh họa)",10.7865,106.67838,12.4,0.054,,,6,0,Giao giờ hành chính
+HCM010,Lý Minh Quân,0120233756,"243 Trần Quốc Thảo, Quận 3 (minh họa)",10.77692,106.68636,2.2,0.007,11:00,14:00,5,0,
+HCM011,Ngô Quốc Giang,0120545291,"414 Tân Sơn Nhì, Tân Phú (minh họa)",10.78752,106.63748,17.8,0.057,,,10,0,Giao giờ hành chính
+HCM012,Lý Đức Tuấn,0120318422,"231 Kinh Dương Vương, Bình Tân (minh họa)",10.77689,106.60303,77.3,0.571,,,4,0,Không giao trưa 12h–13h
+HCM013,Vũ Thị Quân,0120418546,"18 Hoàng Diệu, Quận 4 (minh họa)",10.75996,106.69673,7.5,0.057,08:00,11:00,3,0,
+HCM014,Hoàng Thu Hải,0120823560,"265 Sư Vạn Hạnh, Quận 10 (minh họa)",10.76917,106.67251,5.7,0.037,,,5,0,Để ở bảo vệ tòa nhà
+HCM015,Dương Hoàng Yến,0120854583,"213 Nguyễn Văn Linh, Quận 7 (minh họa)",10.7331,106.71662,1.6,0.004,,,10,0,Gọi trước khi giao
+HCM016,Nguyễn Thị Nhung,0120677043,"170 Thoại Ngọc Hầu, Tân Phú (minh họa)",10.7909,106.63497,26.9,0.068,,,3,0,
+HCM017,Phan Thị Thảo,0120750793,"144 Huỳnh Tấn Phát, Quận 7 (minh họa)",10.73596,106.72326,7.7,0.025,11:00,14:00,10,0,Để ở bảo vệ tòa nhà
+HCM018,Huỳnh Thị Phúc,0120328781,"142 Trần Quốc Thảo, Quận 3 (minh họa)",10.79105,106.68022,5.2,0.03,,,3,1,Gọi trước khi giao
+HCM019,Vũ Văn Lan,0120128996,"49 Thành Thái, Quận 10 (minh họa)",10.77164,106.6663,2.0,0.015,,,3,0,Giao giờ hành chính
+HCM020,Phạm Đức Phúc,0120714503,"129 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.79577,106.68527,3.4,0.049,08:00,11:00,3,0,Giao giờ hành chính
+HCM021,Đặng Quốc Linh,0120614052,"11 An Dương Vương, Quận 5 (minh họa)",10.74855,106.65541,119.8,0.297,,,3,0,
+HCM022,Đặng Văn Nam,0120606210,"65 Bạch Đằng, Bình Thạnh (minh họa)",10.8084,106.70591,8.4,0.047,13:30,17:00,10,0,Không giao trưa 12h–13h
+HCM023,Hồ Thanh Giang,0120239343,"12 Lê Lợi, Quận 1 (minh họa)",10.77244,106.70048,4.8,0.033,11:00,14:00,8,0,
+HCM024,Võ Đức Trang,0120545730,"387 Bạch Đằng, Bình Thạnh (minh họa)",10.79906,106.71796,7.4,0.03,09:00,12:00,3,0,Không giao trưa 12h–13h
+HCM025,Đỗ Ngọc Quân,0120869324,"142 Phan Văn Trị, Gò Vấp (minh họa)",10.84881,106.66179,19.2,0.096,08:00,11:00,10,0,Thu tiền COD
+HCM026,Hoàng Hoàng An,0120996611,"182 Lê Văn Lương, Quận 7 (minh họa)",10.74227,106.7254,0.5,0.009,08:00,11:00,8,0,
+HCM027,Đặng Gia Bình,0120412379,"195 Kha Vạn Cân, Thủ Đức (minh họa)",10.86615,106.73948,0.7,0.009,,,6,0,
+HCM028,Huỳnh Thanh Lan,0120567452,"147 Hoàng Hoa Thám, Tân Bình (minh họa)",10.79345,106.65025,9.8,0.045,,,10,0,Hàng dễ vỡ
+HCM029,Huỳnh Thu An,0120188348,"162 Lê Văn Quới, Bình Tân (minh họa)",10.75535,106.5899,0.6,0.014,11:00,14:00,8,0,
+HCM030,Phan Thu Giang,0120628617,"313 Nguyễn Oanh, Gò Vấp (minh họa)",10.82824,106.67888,1.6,0.018,,,8,1,Gọi trước khi giao
+HCM031,Lý Hoàng Dũng,0120582581,"266 Hoàng Văn Thụ, Phú Nhuận (minh họa)",10.80436,106.68314,6.2,0.043,,,3,1,
+HCM032,Vũ Minh Linh,0120453610,"260 Âu Cơ, Tân Phú (minh họa)",10.78645,106.63626,7.6,0.04,,,5,0,Hàng dễ vỡ
+HCM033,Đỗ Quốc Tâm,0120400165,"109 Hoàng Diệu, Quận 4 (minh họa)",10.75708,106.70223,8.2,0.037,,,5,0,Giao giờ hành chính
+HCM034,Hoàng Thu Trang,0120281203,"120 An Dương Vương, Quận 5 (minh họa)",10.7625,106.6645,12.5,0.079,,,5,0,Để ở bảo vệ tòa nhà
+HCM035,Ngô Đức Dũng,0120712166,"393 Pasteur, Quận 1 (minh họa)",10.78507,106.70785,9.7,0.047,13:30,17:00,6,0,Để ở bảo vệ tòa nhà
+HCM036,Huỳnh Văn Khánh,0120586071,"360 Nguyễn Văn Linh, Quận 7 (minh họa)",10.72366,106.72371,2.0,0.017,08:00,11:00,10,0,Hàng dễ vỡ
+HCM037,Phạm Thanh Linh,0120018652,"400 Huỳnh Tấn Phát, Quận 7 (minh họa)",10.74214,106.72192,2.0,0.009,,,6,0,Không giao trưa 12h–13h
+HCM038,Bùi Ngọc Nhung,0120216395,"311 Trường Chinh, Tân Bình (minh họa)",10.80602,106.64355,73.4,0.513,,,6,0,
+HCM039,Huỳnh Thu Vy,0120538366,"119 Pasteur, Quận 1 (minh họa)",10.78006,106.69773,16.9,0.111,,,5,0,Giao giờ hành chính
+HCM040,Hoàng Văn Phong,0120848246,"188 Phan Văn Trị, Gò Vấp (minh họa)",10.84812,106.66435,1.3,0.011,09:00,12:00,8,0,
+HCM041,Đặng Hoàng Thảo,0120095125,"437 Nơ Trang Long, Bình Thạnh (minh họa)",10.82294,106.71159,19.8,0.116,,,5,0,Không giao trưa 12h–13h
+HCM042,Hồ Thị Thảo,0120225279,"15 Lê Đức Thọ, Gò Vấp (minh họa)",10.83145,106.66331,2.6,0.004,,,4,0,Gọi trước khi giao
+HCM043,Bùi Đức Trang,0120411043,"273 Tân Sơn Nhì, Tân Phú (minh họa)",10.78304,106.62933,9.9,0.049,,,4,0,Thu tiền COD
+HCM044,Võ Thanh Hà,0120145949,"137 Lý Tự Trọng, Quận 1 (minh họa)",10.78076,106.69346,4.2,0.048,,,10,0,
+HCM045,Nguyễn Thanh Hùng,0120539573,"187 Tạ Quang Bửu, Quận 8 (minh họa)",10.71421,106.63293,5.8,0.056,11:00,14:00,4,0,
+HCM046,Võ Đức Yến,0120029452,"84 Sư Vạn Hạnh, Quận 10 (minh họa)",10.78051,106.66044,2.1,0.006,,,10,0,
+HCM047,Huỳnh Thu Nam,0120756138,"217 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.8048,106.68348,2.9,0.013,,,5,0,Không giao trưa 12h–13h
+HCM048,Phan Thị Yến,0120082647,"182 Hoàng Văn Thụ, Phú Nhuận (minh họa)",10.79294,106.67546,1.5,0.018,,,5,1,
+HCM049,Đặng Đức Mai,0120009984,"245 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.80529,106.68565,19.8,0.064,,,10,0,
+HCM050,Trần Thu Linh,0120791576,"131 Võ Văn Ngân, Thủ Đức (minh họa)",10.848,106.74815,2.5,0.011,13:30,17:00,6,0,Gọi trước khi giao
+HCM051,Lê Thu Nhung,0120591793,"56 Châu Văn Liêm, Quận 5 (minh họa)",10.75938,106.6688,2.9,0.013,,,6,1,Giao giờ hành chính
+HCM052,Huỳnh Thu Khánh,0120019121,"24 Võ Văn Tần, Quận 3 (minh họa)",10.78935,106.68482,2.3,0.017,,,5,0,Gọi trước khi giao
+HCM053,Dương Ngọc Mai,0120250013,"264 Lê Văn Việt, Thủ Đức (minh họa)",10.84648,106.7533,1.9,0.01,16:00,19:00,10,0,Hàng dễ vỡ
+HCM054,Lý Ngọc Mai,0120765711,"18 Nơ Trang Long, Bình Thạnh (minh họa)",10.8097,106.69975,1.0,0.011,,,5,0,Thu tiền COD
+HCM055,Huỳnh Thu Dũng,0120590085,"189 Nguyễn Huệ, Quận 1 (minh họa)",10.77863,106.70199,6.2,0.052,09:00,12:00,10,0,Để ở bảo vệ tòa nhà
+HCM056,Trần Thanh Yến,0120839281,"87 Tạ Quang Bửu, Quận 8 (minh họa)",10.71839,106.62558,1.0,0.019,,,3,0,Không giao trưa 12h–13h
+HCM057,Trần Đức Uyên,0120489660,"431 Trần Quốc Thảo, Quận 3 (minh họa)",10.78691,106.67509,2.8,0.017,13:30,17:00,4,0,Hàng dễ vỡ
+HCM058,Lê Thanh Hải,0120007657,"147 Lý Tự Trọng, Quận 1 (minh họa)",10.77983,106.70033,1.0,0.018,13:30,17:00,8,0,Không giao trưa 12h–13h
+HCM059,Lý Văn Quân,0120369111,"117 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.79852,106.67608,3.1,0.035,,,3,0,Thu tiền COD
+HCM060,Phan Thu Yến,0120353466,"205 Cách Mạng Tháng 8, Quận 3 (minh họa)",10.79397,106.68751,1.6,0.002,11:00,14:00,3,0,
+HCM061,Vũ Hoàng Uyên,0120156221,"352 Lê Văn Việt, Thủ Đức (minh họa)",10.83773,106.7555,4.0,0.053,09:00,12:00,3,0,Hàng dễ vỡ
+HCM062,Đỗ Thị Vy,0120714765,"303 Phan Xích Long, Phú Nhuận (minh họa)",10.8015,106.67601,5.6,0.03,,,5,0,Thu tiền COD
+HCM063,Nguyễn Văn Linh,0120964945,"377 Trường Chinh, Tân Bình (minh họa)",10.80622,106.65468,4.7,0.039,,,4,0,Không giao trưa 12h–13h
+HCM064,Hoàng Văn Thảo,0120553079,"160 Tên Lửa, Bình Tân (minh họa)",10.76272,106.59616,1.5,0.007,,,4,0,
+HCM065,Bùi Hoàng Chi,0120886861,"198 Thành Thái, Quận 10 (minh họa)",10.77362,106.6661,2.8,0.007,,,5,0,Để ở bảo vệ tòa nhà
+HCM066,Phạm Gia Quân,0120032123,"105 Sư Vạn Hạnh, Quận 10 (minh họa)",10.78242,106.66371,29.6,0.15,,,4,0,Giao giờ hành chính
+HCM067,Hoàng Gia Linh,0120675848,"275 Lê Văn Sỹ, Quận 3 (minh họa)",10.77845,106.68538,2.8,0.012,08:00,11:00,5,0,Giao giờ hành chính
+HCM068,Đặng Văn Vy,0120651367,"423 Nguyễn Oanh, Gò Vấp (minh họa)",10.83311,106.67504,2.1,0.004,,,5,0,
+HCM069,Bùi Thu Lan,0120877047,"212 Hoàng Văn Thụ, Phú Nhuận (minh họa)",10.80684,106.68227,6.7,0.053,13:30,17:00,6,0,Thu tiền COD
+HCM070,Hồ Thu Hùng,0120014155,"216 Nơ Trang Long, Bình Thạnh (minh họa)",10.80876,106.71229,28.2,0.135,,,10,0,Thu tiền COD
+HCM071,Phạm Ngọc Hải,0120183313,"252 Tạ Quang Bửu, Quận 8 (minh họa)",10.72145,106.64054,13.1,0.101,,,5,1,
+HCM072,Phạm Hoàng Thảo,0120363866,"326 Võ Văn Ngân, Thủ Đức (minh họa)",10.84639,106.74726,2.7,0.004,08:00,11:00,3,0,
+HCM073,Phạm Ngọc Quân,0120901631,"249 Thành Thái, Quận 10 (minh họa)",10.77611,106.66099,1.2,0.005,13:30,17:00,5,0,
+HCM074,Hoàng Thị An,0120719063,"238 Kinh Dương Vương, Bình Tân (minh họa)",10.77584,106.59086,6.5,0.038,08:00,11:00,5,0,
+HCM075,Võ Thu Phúc,0120260123,"218 Phạm Thế Hiển, Quận 8 (minh họa)",10.7204,106.62065,2.6,0.013,,,10,0,Để ở bảo vệ tòa nhà
+HCM076,Lê Quốc Trang,0120086794,"296 Âu Cơ, Tân Phú (minh họa)",10.78638,106.63546,9.1,0.032,,,8,0,Không giao trưa 12h–13h
+HCM077,Võ Thu Nhung,0120304230,"212 Cách Mạng Tháng 8, Quận 3 (minh họa)",10.77846,106.69305,2.3,0.01,,,5,0,Gọi trước khi giao
+HCM078,Vũ Văn Hải,0120630057,"305 Kinh Dương Vương, Bình Tân (minh họa)",10.77082,106.60948,2.9,0.004,13:30,17:00,5,0,Để ở bảo vệ tòa nhà
+HCM079,Phạm Đức Nam,0120792379,"349 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.80045,106.68131,5.5,0.05,13:30,17:00,5,0,Gọi trước khi giao
+HCM080,Dương Văn Thảo,0120024263,"443 Âu Cơ, Tân Phú (minh họa)",10.79081,106.62919,0.4,0.016,08:00,11:00,5,0,Gọi trước khi giao
+HCM081,Nguyễn Ngọc Hải,0120060471,"40 Tên Lửa, Bình Tân (minh họa)",10.75624,106.60894,114.8,0.777,,,6,0,Thu tiền COD
+HCM082,Đặng Minh Dũng,0120916639,"215 Điện Biên Phủ, Bình Thạnh (minh họa)",10.80063,106.72205,9.4,0.052,,,3,0,Để ở bảo vệ tòa nhà
+HCM083,Nguyễn Thanh Nam,0120967058,"190 Lý Tự Trọng, Quận 1 (minh họa)",10.78043,106.70678,0.8,0.003,11:00,14:00,5,0,Không giao trưa 12h–13h
+HCM084,Lê Hoàng Tâm,0120432628,"421 Lê Văn Sỹ, Quận 3 (minh họa)",10.78312,106.68712,2.4,0.007,,,10,1,
+HCM085,Dương Thu Thảo,0120158066,"106 Thành Thái, Quận 10 (minh họa)",10.76915,106.67182,1.1,0.018,16:00,19:00,4,0,
+HCM086,Đỗ Gia Tuấn,0120097217,"142 Huỳnh Tấn Phát, Quận 7 (minh họa)",10.72544,106.71467,64.3,0.537,,,10,0,
+HCM087,Huỳnh Minh Hải,0120579122,"130 3 Tháng 2, Quận 10 (minh họa)",10.77285,106.66841,1.6,0.005,,,10,0,Giao giờ hành chính
+HCM088,Hoàng Gia Lan,0120837096,"409 3 Tháng 2, Quận 10 (minh họa)",10.78243,106.66452,28.7,0.122,13:30,17:00,5,0,
+HCM089,Hồ Thị Hải,0120321842,"64 Kinh Dương Vương, Bình Tân (minh họa)",10.77839,106.61212,0.5,0.008,08:00,11:00,5,0,
+HCM090,Lê Ngọc Trang,0120212409,"277 Tên Lửa, Bình Tân (minh họa)",10.75214,106.59792,0.4,0.017,08:00,11:00,3,0,Không giao trưa 12h–13h
+HCM091,Vũ Văn Long,0120882860,"347 Lê Đức Thọ, Gò Vấp (minh họa)",10.85092,106.66498,6.0,0.045,11:00,14:00,5,0,
+HCM092,Đỗ Quốc Quân,0120901861,"391 Xô Viết Nghệ Tĩnh, Bình Thạnh (minh họa)",10.81415,106.71916,2.4,0.01,13:30,17:00,8,1,Thu tiền COD
+HCM093,Lý Quốc Dũng,0120748437,"331 Hai Bà Trưng, Quận 1 (minh họa)",10.78605,106.69618,1.0,0.006,13:30,17:00,4,0,
+HCM094,Trần Thu Phong,0120368174,"89 Tô Hiến Thành, Quận 10 (minh họa)",10.78104,106.67413,3.9,0.028,,,6,0,Gọi trước khi giao
+HCM095,Ngô Ngọc Chi,0120415803,"193 Hoàng Hoa Thám, Tân Bình (minh họa)",10.80973,106.65507,2.3,0.012,08:00,11:00,8,0,Gọi trước khi giao
+HCM096,Bùi Thu Chi,0120897359,"100 Âu Cơ, Tân Phú (minh họa)",10.78373,106.6275,57.6,0.664,,,5,0,Hàng dễ vỡ
+HCM097,Đặng Thị Trang,0120048509,"142 Lê Đức Thọ, Gò Vấp (minh họa)",10.83411,106.67396,2.4,0.018,,,6,0,Giao giờ hành chính
+HCM098,Võ Thị Uyên,0120057838,"268 Sư Vạn Hạnh, Quận 10 (minh họa)",10.77055,106.66421,1.9,0.008,13:30,17:00,4,0,Gọi trước khi giao
+HCM099,Võ Hoàng Khánh,0120482140,"266 Nguyễn Thị Minh Khai, Quận 1 (minh họa)",10.78679,106.69239,1.8,0.007,,,5,0,
+HCM100,Hồ Thu Uyên,0120007985,"379 Tạ Quang Bửu, Quận 8 (minh họa)",10.71201,106.61791,0.3,0.015,,,8,0,
+HCM101,Phạm Hoàng Yến,0120053344,"102 Lý Tự Trọng, Quận 1 (minh họa)",10.77002,106.69492,0.9,0.009,,,3,0,Gọi trước khi giao
+HCM102,Phạm Quốc Uyên,0120419216,"438 Xô Viết Nghệ Tĩnh, Bình Thạnh (minh họa)",10.82095,106.70405,0.9,0.004,08:00,11:00,3,0,
+HCM103,Đặng Văn Trang,0120216183,"2 Xô Viết Nghệ Tĩnh, Bình Thạnh (minh họa)",10.80564,106.70624,100.4,0.778,,,5,0,Giao giờ hành chính
+HCM104,Vũ Văn Chi,0120932615,"71 Lê Đức Thọ, Gò Vấp (minh họa)",10.83703,106.66561,0.6,0.005,11:00,14:00,6,0,Hàng dễ vỡ
+HCM105,Huỳnh Gia Uyên,0120649067,"87 Sư Vạn Hạnh, Quận 10 (minh họa)",10.77611,106.66713,24.7,0.14,09:00,12:00,4,0,
+HCM106,Ngô Thị Long,0120585157,"448 Võ Văn Ngân, Thủ Đức (minh họa)",10.83627,106.75672,9.1,0.044,,,5,0,
+HCM107,Bùi Thanh Quân,0120947990,"161 Phan Xích Long, Phú Nhuận (minh họa)",10.79787,106.68769,0.9,0.008,,,5,0,Không giao trưa 12h–13h
+HCM108,Dương Ngọc Khánh,0120575482,"372 Võ Văn Tần, Quận 3 (minh họa)",10.77706,106.67677,27.9,0.139,,,8,0,Để ở bảo vệ tòa nhà
+HCM109,Ngô Quốc Giang,0120542033,"416 Nguyễn Trãi, Quận 5 (minh họa)",10.75531,106.67228,27.2,0.129,16:00,19:00,4,1,
+HCM110,Hoàng Văn Vy,0120308369,"70 Lạc Long Quân, Tân Bình (minh họa)",10.79409,106.64662,1.6,0.02,13:30,17:00,10,0,Thu tiền COD
+HCM111,Trần Thị Quân,0120546222,"302 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.79128,106.67415,0.6,0.018,08:00,11:00,3,0,
+HCM112,Huỳnh Quốc Tâm,0120382180,"382 Châu Văn Liêm, Quận 5 (minh họa)",10.75813,106.6579,7.5,0.041,,,10,0,Hàng dễ vỡ
+HCM113,Hoàng Thị Uyên,0120896981,"302 Dương Bá Trạc, Quận 8 (minh họa)",10.72709,106.6208,0.8,0.019,09:00,12:00,5,1,
+HCM114,Hồ Gia Mai,0120630628,"172 Nguyễn Huệ, Quận 1 (minh họa)",10.7721,106.69343,1.1,0.009,11:00,14:00,5,0,
+HCM115,Đỗ Thị Bình,0120766026,"361 Lê Lợi, Quận 1 (minh họa)",10.77562,106.70845,24.4,0.147,16:00,19:00,8,0,Hàng dễ vỡ
+HCM116,Võ Ngọc Hùng,0120660481,"188 Lê Lợi, Quận 1 (minh họa)",10.77525,106.70198,3.2,0.055,,,8,0,Không giao trưa 12h–13h
+HCM117,Phan Thị Mai,0120079945,"22 Nguyễn Huệ, Quận 1 (minh họa)",10.78526,106.70956,0.7,0.008,,,4,0,
+HCM118,Lê Thanh Quân,0120940314,"71 Lý Tự Trọng, Quận 1 (minh họa)",10.77993,106.70732,104.6,0.791,,,5,0,
+HCM119,Hồ Thị Hùng,0120393161,"410 Nguyễn Oanh, Gò Vấp (minh họa)",10.8452,106.67662,0.7,0.005,,,4,0,Không giao trưa 12h–13h
+HCM120,Lý Thu Nhung,0120509111,"203 Quang Trung, Gò Vấp (minh họa)",10.8328,106.65163,5.1,0.027,,,10,0,Giao giờ hành chính
+HCM121,Dương Quốc Khánh,0120875066,"37 Nguyễn Trãi, Quận 5 (minh họa)",10.75605,106.67056,2.0,0.011,,,5,0,Hàng dễ vỡ
+HCM122,Dương Thị Hùng,0120642965,"117 Dương Bá Trạc, Quận 8 (minh họa)",10.72938,106.63248,1.2,0.007,16:00,19:00,5,0,Hàng dễ vỡ
+HCM123,Ngô Thanh Uyên,0120230723,"117 Nguyễn Huệ, Quận 1 (minh họa)",10.77708,106.70943,2.6,0.013,,,5,0,Hàng dễ vỡ
+HCM124,Hồ Thanh Khánh,0120300239,"205 Thành Thái, Quận 10 (minh họa)",10.77951,106.65972,1.0,0.005,13:30,17:00,5,0,
+HCM125,Hồ Văn Phong,0120355497,"200 Thoại Ngọc Hầu, Tân Phú (minh họa)",10.78708,106.62648,16.0,0.056,08:00,11:00,6,0,
+HCM126,Ngô Minh Hà,0120035536,"298 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.79766,106.67752,24.5,0.15,11:00,14:00,6,0,
+HCM127,Lý Quốc Tuấn,0120023484,"16 Nguyễn Huệ, Quận 1 (minh họa)",10.78204,106.70714,4.2,0.02,09:00,12:00,5,1,
+HCM128,Hoàng Gia Phúc,0120273827,"160 Hoàng Văn Thụ, Phú Nhuận (minh họa)",10.80693,106.68046,11.0,0.088,13:30,17:00,10,0,Gọi trước khi giao
+HCM129,Võ Quốc Mai,0120284580,"108 Hoàng Diệu, Quận 4 (minh họa)",10.75969,106.69588,24.0,0.14,08:00,11:00,5,0,
+HCM130,Đặng Thanh Nhung,0120673537,"405 Châu Văn Liêm, Quận 5 (minh họa)",10.75291,106.66595,9.0,0.023,,,6,0,
+HCM131,Ngô Quốc Phúc,0120436947,"303 Hoàng Diệu, Quận 4 (minh họa)",10.76458,106.69663,2.6,0.006,16:00,19:00,4,0,
+HCM132,Lý Thị Long,0120697095,"15 Nam Kỳ Khởi Nghĩa, Quận 3 (minh họa)",10.78707,106.68975,5.6,0.045,16:00,19:00,3,0,
+HCM133,Phan Hoàng Dũng,0120511207,"358 Lê Văn Lương, Quận 7 (minh họa)",10.72608,106.71664,74.4,0.678,09:00,12:00,8,0,Gọi trước khi giao
+HCM134,Lê Thanh Long,0120641626,"387 Nguyễn Văn Linh, Quận 7 (minh họa)",10.7315,106.73069,85.8,0.775,,,10,0,Gọi trước khi giao
+HCM135,Nguyễn Hoàng Trang,0120281458,"365 Nguyễn Văn Linh, Quận 7 (minh họa)",10.72323,106.71546,3.8,0.02,,,4,0,
+HCM136,Võ Văn Quân,0120746308,"427 Tân Sơn Nhì, Tân Phú (minh họa)",10.79792,106.62853,2.7,0.013,,,10,0,Thu tiền COD
+HCM137,Lê Văn Dũng,0120603488,"363 Thành Thái, Quận 10 (minh họa)",10.778,106.67413,28.8,0.081,,,3,0,Giao giờ hành chính
+HCM138,Vũ Gia Trang,0120665888,"69 Tên Lửa, Bình Tân (minh họa)",10.75269,106.59391,1.1,0.017,13:30,17:00,3,0,Thu tiền COD
+HCM139,Lê Thu Trang,0120528524,"320 Lũy Bán Bích, Tân Phú (minh họa)",10.78567,106.63038,1.0,0.003,13:30,17:00,5,0,Hàng dễ vỡ
+HCM140,Dương Gia Linh,0120895650,"50 Nguyễn Kiệm, Phú Nhuận (minh họa)",10.79949,106.6865,1.1,0.007,08:00,11:00,5,0,Không giao trưa 12h–13h
+HCM141,Trần Quốc Long,0120383135,"268 Hai Bà Trưng, Quận 1 (minh họa)",10.78519,106.70588,8.4,0.05,13:30,17:00,4,0,Giao giờ hành chính
+HCM142,Ngô Ngọc Khánh,0120030375,"331 Lê Văn Việt, Thủ Đức (minh họa)",10.84576,106.74349,1.6,0.009,09:00,12:00,5,0,Gọi trước khi giao
+HCM143,Phạm Thanh Tuấn,0120219214,"127 Võ Văn Tần, Quận 3 (minh họa)",10.78362,106.69343,3.6,0.031,13:30,17:00,8,1,Gọi trước khi giao
+HCM144,Hồ Gia Chi,0120563719,"6 Thành Thái, Quận 10 (minh họa)",10.77846,106.67274,1.0,0.011,,,10,1,
+HCM145,Ngô Gia Trang,0120329275,"217 Hoàng Văn Thụ, Phú Nhuận (minh họa)",10.79278,106.67653,8.7,0.047,,,10,0,Gọi trước khi giao
+HCM146,Trần Hoàng Yến,0120366904,"196 Lạc Long Quân, Tân Bình (minh họa)",10.80219,106.66192,51.6,0.614,,,8,0,Gọi trước khi giao
+HCM147,Huỳnh Thu Khánh,0120574525,"173 Nguyễn Huệ, Quận 1 (minh họa)",10.78028,106.69754,21.1,0.131,,,8,0,Hàng dễ vỡ
+HCM148,Lê Hoàng Mai,0120541976,"263 Lạc Long Quân, Tân Bình (minh họa)",10.80176,106.65427,21.7,0.09,08:00,11:00,8,0,Thu tiền COD
+HCM149,Đỗ Đức Phong,0120355331,"211 Tô Hiến Thành, Quận 10 (minh họa)",10.76678,106.66495,29.3,0.079,13:30,17:00,6,0,Để ở bảo vệ tòa nhà
+HCM150,Lý Thu Linh,0120197074,"36 Tô Hiến Thành, Quận 10 (minh họa)",10.78088,106.66318,1.1,0.011,16:00,19:00,3,0,Gọi trước khi giao
+HCM151,Công ty Minh Họa,0120000151,"88 Cộng Hòa, Tân Bình (minh họa)",10.803,106.65,2500,12,,,20,0,Cố ý vượt tải mọi xe để kiểm thử cảnh báo
