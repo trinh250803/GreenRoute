@@ -1,0 +1,38 @@
+{
+  "version": "2026.10-demo",
+  "emission_scope": "direct_combustion",
+  "scope_note": "Phạm vi MVP: CO2 trực tiếp từ đốt nhiên liệu khi vận hành (tank-to-wheel). Xe điện: phát thải ống xả = 0; phát thải gián tiếp từ điện lưới được báo cáo RIÊNG, không cộng vào tổng CO2 trực tiếp.",
+  "illustrative": true,
+  "illustrative_note": "Dữ liệu minh họa — hệ số và giá cần nghiệp vụ xác minh nguồn Việt Nam và phê duyệt trước khi dùng chính thức.",
+  "base_factors": {
+    "gasoline": { "value": 2.31, "unit": "kg CO2/L", "source": "IPCC 2006 Vol.2 Ch.3 (giá trị mặc định, quy đổi theo khối lượng riêng)", "year": 2006, "geography": "global default" },
+    "ethanol": { "value": 1.51, "unit": "kg CO2/L", "source": "Tính từ hóa học đốt ethanol (CO2 sinh học)", "year": 2006, "geography": "global default", "biogenic": true },
+    "diesel": { "value": 2.68, "unit": "kg CO2/L", "source": "IPCC 2006 Vol.2 Ch.3 (giá trị mặc định)", "year": 2006, "geography": "global default" },
+    "grid_vn": { "value": 0.6592, "unit": "kg CO2/kWh", "source": "Hệ số phát thải lưới điện Việt Nam 2023 (Bộ TN&MT công bố) — CẦN XÁC MINH", "year": 2023, "geography": "Vietnam" }
+  },
+  "fuels": {
+    "E0":          { "label": "Xăng nền (E0)", "kind": "liquid", "ethanol_share_volume": 0.00, "status": "supported",  "official": true,  "price_vnd": 21000, "price_unit": "VND/L" },
+    "E5":          { "label": "Xăng E5 RON92", "kind": "liquid", "ethanol_share_volume": 0.05, "status": "supported",  "official": true,  "price_vnd": 20500, "price_unit": "VND/L" },
+    "E10":         { "label": "Xăng E10",      "kind": "liquid", "ethanol_share_volume": 0.10, "status": "supported",  "official": true,  "price_vnd": 20300, "price_unit": "VND/L" },
+    "E20":         { "label": "Xăng E20",      "kind": "liquid", "ethanol_share_volume": 0.20, "status": "simulation", "official": false, "price_vnd": 20000, "price_unit": "VND/L" },
+    "E25":         { "label": "Xăng E25",      "kind": "liquid", "ethanol_share_volume": 0.25, "status": "simulation", "official": false, "price_vnd": 19800, "price_unit": "VND/L" },
+    "E85":         { "label": "E85",           "kind": "liquid", "ethanol_share_volume": 0.85, "status": "simulation", "official": false, "price_vnd": 18000, "price_unit": "VND/L" },
+    "E100":        { "label": "Ethanol E100",  "kind": "liquid", "ethanol_share_volume": 1.00, "status": "unverified", "official": false, "price_vnd": 17500, "price_unit": "VND/L" },
+    "diesel":      { "label": "Dầu diesel",    "kind": "liquid", "ethanol_share_volume": 0,    "status": "supported",  "official": true,  "price_vnd": 19500, "price_unit": "VND/L", "factor_key": "diesel" },
+    "electricity": { "label": "Điện lưới",     "kind": "electric", "status": "supported", "official": true, "price_vnd": 3000, "price_unit": "VND/kWh", "factor_key": "grid_vn" }
+  },
+  "vehicle_types": {
+    "motorbike_petrol":   { "label": "Xe máy xăng",   "speed_kmh": 25, "allowed": ["E0", "E5", "E10"], "simulation_allowed": ["E20", "E25"] },
+    "motorbike_electric": { "label": "Xe máy điện",   "speed_kmh": 25, "allowed": ["electricity"], "simulation_allowed": [] },
+    "van":                { "label": "Xe van",        "speed_kmh": 22, "allowed": ["E0", "E5", "E10", "diesel"], "simulation_allowed": ["E20", "E25", "E85"] },
+    "small_truck":        { "label": "Xe tải nhỏ",    "speed_kmh": 20, "allowed": ["diesel"], "simulation_allowed": [] },
+    "ev_van":             { "label": "Van điện",      "speed_kmh": 22, "allowed": ["electricity"], "simulation_allowed": [] }
+  },
+  "delivery_check": { "max_distance_m": 300 },
+  "default_weights": { "co2_vnd_per_kg": 0, "time_vnd_per_min": 0, "time_limit_s": 5 },
+  "routing": {
+    "mode": "haversine_estimate",
+    "detour_factor": 1.3,
+    "note": "Khoảng cách = đường chim bay × hệ số đường vòng 1.3 (ước tính). Đặt OSRM_URL để dùng ma trận đường thực."
+  }
+}

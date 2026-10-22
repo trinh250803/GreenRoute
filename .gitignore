@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+data/db.json
+data/db.json.tmp
+.env
+data/fuels_active.json
+TEST_ACCOUNTS.md
+render-secrets.local.txt

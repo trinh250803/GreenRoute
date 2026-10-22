@@ -1,0 +1,22 @@
+# Render Blueprint — free web service (https://render.com/docs/blueprint-spec)
+services:
+  - type: web
+    name: greenroute-ai
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DB_PATH
+        value: ./data/db.json
+      - key: ADMIN_USERNAME
+        value: admin
+      # Secrets: entered in the Render dashboard, never committed.
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ACCOUNTS_JSON
+        sync: false
