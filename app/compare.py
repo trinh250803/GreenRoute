@@ -28,7 +28,7 @@ def compare_totals(reference: dict, candidate: dict) -> dict:
 
 
 def apply_overrides(vehicles: list[dict], overrides: dict, cfg: dict):
-    errors, out = [], []
+    errors, notes, out = [], [], []
     for v in vehicles:
         o = overrides.get(v["vehicle_id"])
         if not o:
@@ -44,13 +44,17 @@ def apply_overrides(vehicles: list[dict], overrides: dict, cfg: dict):
             old_kind = cfg["fuels"].get(v["fuel_blend_code"], {}).get("kind")
             if o.get("consumption_rate") is None and cfg["fuels"].get(new_fuel, {}).get("kind") != old_kind:
                 errors.append({"vehicle_id": v["vehicle_id"], "error": "Đổi loại năng lượng cần nhập mức tiêu hao mới (đơn vị khác)"})
+            elif o.get("consumption_rate") is None:
+                # Phụ lục 2 §2: blends do not share one L/100 km — say so instead of assuming it silently.
+                notes.append(f'Xe {v["vehicle_id"]}: {new_fuel} đang dùng lại mức tiêu hao {v.get("consumption_rate")} /100km của '
+                             f'{v["fuel_blend_code"]} — tỷ lệ ethanol khác thường làm tiêu hao khác; nhập mức tiêu hao thực tế nếu có')
         out.append(nv)
-    return out, errors
+    return out, errors, notes
 
 
 def run_fuel_scenario(base_result, vehicles, orders, matrix, cfg, overrides, mode, weights=None, time_limit_s=5) -> dict:
     """mode 'same_route' keeps routes (isolates fuel effect); 'reoptimize' re-runs OR-Tools."""
-    nv, errors = apply_overrides(vehicles, overrides or {}, cfg)
+    nv, errors, notes = apply_overrides(vehicles, overrides or {}, cfg)
     if errors:
         return {"ok": False, "errors": errors}
     if mode == "reoptimize":
@@ -62,6 +66,7 @@ def run_fuel_scenario(base_result, vehicles, orders, matrix, cfg, overrides, mod
         result = {"routes": routes, "unassigned": base_result["unassigned"],
                   "totals": summarize(routes, base_result["totals"]["orders_total"], len(base_result["unassigned"])),
                   "meta": {**base_result["meta"], "scenario_mode": "same_route"}}
+    result["totals"]["warnings"] = notes + result["totals"]["warnings"]
     reopt = mode == "reoptimize"
     return {
         "ok": True, "mode": "reoptimize" if reopt else "same_route",

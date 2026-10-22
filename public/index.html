@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GreenRoute AI</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261022d">
+  <link rel="stylesheet" href="styles.css?v=20261022e">
 </head>
 <body>
   <div id="env-banner" class="env-banner" role="status">⚠ Môi trường nghiên cứu, chưa áp dụng chính thức</div>
@@ -128,7 +128,7 @@
             </div>
             <div id="orders-report" style="margin-top:10px"></div>
           </div>
-          <details class="card" id="order-add" data-roles="admin,dispatcher"><summary>Thêm đơn hàng</summary>
+          <details class="card" id="order-add" data-roles="admin,dispatcher"><summary id="order-add-title">Thêm đơn hàng</summary>
             <div class="order-add">
               <form id="order-form" class="form-grid" autocomplete="off">
                 <label class="field addr-field">Địa chỉ giao — gõ để tìm, chọn trong danh sách
@@ -148,7 +148,7 @@
                 <label class="field">Thời gian dừng (phút)<input name="service_time_min" id="of-svc" inputmode="numeric"></label>
                 <label class="field">Ưu tiên<select name="priority"><option value="0">Thường</option><option value="1">Ưu tiên</option></select></label>
                 <label class="field" style="grid-column:1/-1">Ghi chú<input name="note"></label>
-                <div style="grid-column:1/-1;display:flex;gap:8px"><button>Lưu đơn</button><button type="button" class="secondary" id="of-reset">Làm mới form</button></div>
+                <div style="grid-column:1/-1;display:flex;gap:8px"><button id="of-submit">Lưu đơn</button><button type="button" class="secondary" id="of-reset">Làm mới form</button></div>
               </form>
               <div>
                 <div id="order-map" class="map" style="height:100%;min-height:340px"></div>
@@ -176,7 +176,7 @@
               <label class="field">Nhiên liệu<select name="fuel_blend_code" id="vf-fuel"></select></label>
               <label class="field">Tải trọng (kg) *<input name="capacity_weight_kg"></label>
               <label class="field">Thể tích (m³)<input name="capacity_volume_m3"></label>
-              <label class="field">Chi phí vận hành (VND/km) *<input name="cost_per_km"></label>
+              <label class="field">Chi phí vận hành, chưa gồm nhiên liệu (VND/km) *<input name="cost_per_km" title="Khấu hao, bảo dưỡng, nhân công… Tiền xăng/điện được tính riêng từ mức tiêu hao × giá."></label>
               <label class="field">Chi phí cố định/ngày<input name="fixed_cost_vnd"></label>
               <label class="field">Tiêu hao (/100 km)<input name="consumption_rate"></label>
               <label class="field">Giá năng lượng (trống = mặc định)<input name="fuel_price"></label>
@@ -275,10 +275,10 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="i18n-zh.js?v=20261022d"></script>
-  <script src="i18n.js?v=20261022d"></script>
-  <script src="auth.js?v=20261022d"></script>
-  <script src="app.js?v=20261022d"></script>
-  <script src="insights.js?v=20261022d"></script>
+  <script src="i18n-zh.js?v=20261022e"></script>
+  <script src="i18n.js?v=20261022e"></script>
+  <script src="auth.js?v=20261022e"></script>
+  <script src="app.js?v=20261022e"></script>
+  <script src="insights.js?v=20261022e"></script>
 </body>
 </html>

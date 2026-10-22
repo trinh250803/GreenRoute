@@ -66,10 +66,10 @@ const I18N = (() => {
     'Thay thế toàn bộ': 'Replace all', 'Thêm vào': 'Append', '⬆ Nhập file': '⬆ Import file', 'Xóa tất cả': 'Delete all', 'Thêm đơn thủ công': 'Add order manually',
     'Mã đơn *': 'Order ID *', 'Khách hàng': 'Customer', 'Số điện thoại': 'Phone', 'Địa chỉ': 'Address', 'Vĩ độ *': 'Latitude *', 'Kinh độ *': 'Longitude *',
     'Khối lượng (kg)': 'Weight (kg)', 'Thể tích (m³)': 'Volume (m³)', 'Giao từ (HH:MM)': 'Window from (HH:MM)', 'Giao đến (HH:MM)': 'Window to (HH:MM)',
-    'Thời gian dừng (phút)': 'Service time (min)', 'Ưu tiên': 'Priority', 'Thường': 'Normal', 'Ghi chú': 'Note', 'Lưu đơn': 'Save order', 'Mã đơn': 'Order ID',
+    'Thời gian dừng (phút)': 'Service time (min)', 'Ưu tiên': 'Priority', 'Thường': 'Normal', 'Ghi chú': 'Note', 'Sửa': 'Edit', 'Sửa đơn hàng': 'Edit order', 'Cập nhật đơn': 'Update order', 'Lưu đơn': 'Save order', 'Mã đơn': 'Order ID',
     'Dừng': 'Stop', 'Xóa': 'Delete', 'ưu tiên': 'priority', 'cả ngày': 'all day', 'Chi tiết': 'Details',
     'Thêm / sửa xe (trùng mã xe sẽ cập nhật)': 'Add / edit vehicle (same ID updates it)', 'Mã xe *': 'Vehicle ID *', 'Loại xe': 'Vehicle type', 'Nhiên liệu': 'Fuel',
-    'Tải trọng (kg) *': 'Payload (kg) *', 'Chi phí vận hành (VND/km) *': 'Operating cost (VND/km) *', 'Chi phí cố định/ngày': 'Fixed cost/day', 'Tiêu hao (/100 km)': 'Consumption (/100 km)',
+    'Tải trọng (kg) *': 'Payload (kg) *', 'Chi phí vận hành, chưa gồm nhiên liệu (VND/km) *': 'Operating cost excl. fuel (VND/km) *', 'Chi phí cố định/ngày': 'Fixed cost/day', 'Khấu hao, bảo dưỡng, nhân công… Tiền xăng/điện được tính riêng từ mức tiêu hao × giá.': 'Depreciation, maintenance, labour… Fuel/electricity is costed separately as consumption × price.', 'Tiêu hao (/100 km)': 'Consumption (/100 km)',
     'Giá năng lượng (trống = mặc định)': 'Energy price (empty = default)', 'Hệ số phát thải tùy chỉnh': 'Custom emission factor', 'Nguồn hệ số': 'Factor source',
     'Bắt đầu ca': 'Shift start', 'Kết thúc ca': 'End shift', 'Sẵn sàng': 'Available', 'Xác nhận nhiên liệu mô phỏng': 'Confirm simulated fuel', 'Lưu xe': 'Save vehicle',
     'Tải trọng': 'Payload', 'Thể tích': 'Volume', 'Cố định': 'Fixed', 'Tiêu hao': 'Consumption', 'Giá NL': 'Energy price', 'Ca': 'Shift', 'sẵn sàng': 'available',
@@ -126,6 +126,8 @@ const I18N = (() => {
     'Không tiếp cận được (cấm đường, khu hạn chế)': 'No access (road ban, restricted area)', 'Hết thời gian ca': 'Shift time ran out', 'Lý do khác': 'Other reason',
   };
   const PATTERNS = [
+    [/^baseline chỉ giao (\d+) đơn$/, 'baseline served only $1 orders'],
+    [/^Khoảng cách = đường chim bay × hệ số đường vòng ([\d.]+) \(ước tính, chưa theo đường thực tế\)\.$/, 'Distance = straight line × detour factor $1 (estimate, not real road routes).'],
     [/^(\d+) đơn đã nhập$/, '$1 orders imported'], [/^(\d+)\/(\d+) xe sẵn sàng · (\d+) xe có tài xế$/, '$1/$2 vehicles available · $3 with a driver'],
     [/^(\d+) xe sẵn sàng$/, '$1 vehicles available'], [/^(\d+) xe trong kế hoạch$/, '$1 vehicles in plan'], [/^([\d.,]+)% đơn$/, '$1% of orders'],
     [/^(\d+)\/(\d+) thành công$/, '$1/$2 successful'], [/^Cập nhật (.+)$/, 'Updated $1'], [/^Đơn hàng \((.+)\)$/, 'Orders ($1)'],
@@ -148,7 +150,7 @@ const I18N = (() => {
   const FRAGMENTS = [
     ['Môi trường nghiên cứu, chưa áp dụng chính thức', 'Research environment — not yet in official use'],
     ['Giờ cao điểm', 'Peak hours'], ['giờ cao điểm', 'peak hours'], ['Điểm tiếp theo', 'Next stop'],
-    ['Môi trường thử nghiệm', 'Test environment'], ['kiểm tra lại số nhà', 'check the house number'], ['Đã thêm đơn', 'Order added'],
+    ['Môi trường thử nghiệm', 'Test environment'], ['kiểm tra lại số nhà', 'check the house number'], ['Đã cập nhật đơn', 'Order updated'], ['Đã thêm đơn', 'Order added'],
     ['khác số đơn', 'different order count'], ['so với baseline', 'vs baseline'], ['đơn nguy cơ trễ', 'orders at late risk'], ['nguy cơ trễ', 'late risk'],
     ['ước tính', 'estimate'], ['Đã phát hành lúc', 'Published at'], ['Tài xế mở', 'Drivers open'], ['để nhận tuyến', 'to receive their route'],
     ['Phương án này đã phát hành lúc', 'This plan was published at'], ['chặng giờ cao điểm', 'peak-hour legs'], ['chặng', 'legs'], ['giờ xe chạy', 'vehicle-hours'],

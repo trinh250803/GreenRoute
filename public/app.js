@@ -209,11 +209,14 @@ function renderRun(run) {
   $('#btn-publish').disabled = !run.optimized.routes.length;
   $('#publish-msg').innerHTML = run.published_at ? alertBox('ok', `✓ Phương án này đã phát hành lúc ${new Date(run.published_at).toLocaleString('vi-VN')}.`) : '';
   const t = run.optimized.totals, cmp = Object.fromEntries(run.comparison.rows.map(r => [r.metric, r.change_pct]));
-  const cmpNote = run.comparison.comparable === false ? ' (khác số đơn)' : ' so với baseline';
+  // When baseline serves fewer orders, raw km/vehicle deltas flatter the optimiser — show the reason instead.
+  const vsBase = m => run.comparison.comparable === false
+    ? `<span class="muted" title="${esc(run.comparison.comparable_note)}">baseline chỉ giao ${run.baseline.totals.orders_assigned} đơn</span>`
+    : deltaHtml(cmp[m]) + ' so với baseline';
   $('#kpis').innerHTML = [
     ['📦 Đơn đã phân công', `${t.orders_assigned}/${t.orders_total}`, `${t.assignment_rate_pct}%`, '--brand'],
-    ['🚚 Xe sử dụng', t.vehicles_used, deltaHtml(cmp.vehicles_used) + cmpNote, '--blue'],
-    ['🛣 Quãng đường', `${fmt(t.distance_km, 1)} km`, deltaHtml(cmp.distance_km) + cmpNote, '--violet'],
+    ['🚚 Xe sử dụng', t.vehicles_used, vsBase('vehicles_used'), '--blue'],
+    ['🛣 Quãng đường', `${fmt(t.distance_km, 1)} km`, vsBase('distance_km'), '--violet'],
     ['💰 Tổng chi phí', `${fmt(t.total_cost_vnd)} ₫`, `${fmt(t.cost_per_order_vnd)} ₫/đơn · ${deltaHtml(cmp.cost_per_order_vnd)}`, '--amber'],
     ['🌿 CO₂ trực tiếp', `${fmt(t.co2_direct_kg, 2)} kg`, `${fmt((t.co2_per_order ?? 0) * 1000)} g/đơn · ${deltaHtml(cmp.co2_per_order)}`, '--brand'],
     ['⚡ CO₂ gián tiếp (điện)', `${fmt(t.co2_grid_indirect_kg, 2)} kg`, 'báo cáo riêng, không cộng', '--muted'],
@@ -389,11 +392,12 @@ function renderOrders() {
     rows.map(o => `<tr><td><a href="#" class="oid" data-order="${esc(o.order_id)}">${esc(o.order_id)}</a>${o.priority ? ' <span class="badge warn">ưu tiên</span>' : ''}</td><td>${esc(o.customer_name)}<br><small class="muted">${esc(o.phone)}</small></td>
       <td>${esc(o.address)}<br><small class="muted">${o.latitude}, ${o.longitude}</small></td><td class="num">${o.weight_kg}</td><td class="num">${o.volume_m3}</td>
       <td>${o.tw_start != null || o.tw_end != null ? `${t2(o.tw_start)}–${t2(o.tw_end)}` : '<span class="muted">cả ngày</span>'}</td><td class="num">${o.service_time_min}′</td><td><small>${esc(o.note)}</small></td>
-      <td>${can('admin', 'dispatcher') ? `<button class="danger sm" data-del-order="${esc(o.order_id)}">Xóa</button>` : ''}</td></tr>`).join('')
+      <td>${can('admin', 'dispatcher') ? `<button class="secondary sm" data-edit-order="${esc(o.order_id)}">Sửa</button> <button class="danger sm" data-del-order="${esc(o.order_id)}">Xóa</button>` : ''}</td></tr>`).join('')
   }</tbody></table></div>` : empty('📦', q ? 'Không có đơn khớp từ khóa.' : 'Chưa có đơn hàng. Nhập file CSV/XLSX hoặc thêm thủ công.');
 }
 $('#orders-search').oninput = renderOrders;
 $('#orders-table').onclick = async e => {
+  if (e.target.dataset.editOrder) { editOrder(e.target.dataset.editOrder); return; }
   const id = e.target.dataset.delOrder;
   if (id && confirm(`Xóa đơn ${id}?`)) { await api(`/api/orders/${encodeURIComponent(id)}`, { method: 'DELETE' }); toast(`Đã xóa ${id}`); loadOrders(); }
 };
@@ -404,12 +408,33 @@ $('#btn-orders-import').onclick = e => busy(e.target, async () => {
   $('#orders-report').innerHTML = reportHtml(body); loadOrders();
 });
 $('#btn-orders-clear').onclick = async () => { if (confirm('Xóa TẤT CẢ đơn hàng?')) { await api('/api/orders', { method: 'DELETE' }); toast('Đã xóa tất cả đơn'); loadOrders(); } };
+let EDITING_ORDER = null;  // order_id while the form edits an existing order (F-02: tạo/sửa/xóa)
 $('#order-form').onsubmit = async e => {
   e.preventDefault();
-  const { body } = await api('/api/orders', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+  const data = JSON.stringify(Object.fromEntries(new FormData(e.target)));
+  const { body } = EDITING_ORDER
+    ? await api(`/api/orders/${encodeURIComponent(EDITING_ORDER)}`, { method: 'PUT', body: data })
+    : await api('/api/orders', { method: 'POST', body: data });
   $('#orders-report').innerHTML = reportHtml(body);
-  if (!body.errors?.length) { toast(`Đã thêm đơn ${$('#of-id').value}`, 'ok'); await loadOrders(); resetOrderForm(); }
+  if (!body.errors?.length) { toast(`${EDITING_ORDER ? 'Đã cập nhật đơn' : 'Đã thêm đơn'} ${$('#of-id').value}`, 'ok'); await loadOrders(); resetOrderForm(); }
 };
+function editOrder(id) {
+  const o = ORDERS.find(x => x.order_id === id);
+  if (!o) return;
+  resetOrderForm();
+  EDITING_ORDER = id;
+  const f = $('#order-form').elements;
+  Object.entries({ order_id: o.order_id, address: o.address, customer_name: o.customer_name, phone: o.phone, latitude: o.latitude, longitude: o.longitude,
+    weight_kg: o.weight_kg, volume_m3: o.volume_m3, delivery_window_start: t2(o.tw_start), delivery_window_end: t2(o.tw_end),
+    service_time_min: o.service_time_min, priority: o.priority ? 1 : 0, note: o.note }).forEach(([k, v]) => { f[k].value = v ?? ''; });
+  $('#of-id').readOnly = true;
+  $('#order-add-title').textContent = 'Sửa đơn hàng';
+  $('#of-submit').textContent = 'Cập nhật đơn';
+  $('#order-add').open = true;
+  ensureOrderMap();
+  setTimeout(() => { orderMap?.invalidateSize(); $('#of-lat').dispatchEvent(new Event('change')); }, 60);
+  $('#order-add').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 // ---- Order form: address search, map pin, auto-filled fields (all editable) ----
 let orderMap, orderPin, addrTimer, addrItems = [], addrIdx = -1, addrSeq = 0;
@@ -502,6 +527,10 @@ $('#of-address').addEventListener('blur', () => setTimeout(closeAddrList, 150));
 }));
 function resetOrderForm() {
   $('#order-form').reset();
+  EDITING_ORDER = null;
+  $('#of-id').readOnly = false;
+  $('#order-add-title').textContent = 'Thêm đơn hàng';
+  $('#of-submit').textContent = 'Lưu đơn';
   $$('#order-form .autofilled').forEach(el => el.classList.remove('autofilled'));
   $('#addr-note').textContent = '';
   if (orderPin) orderPin.setOpacity(0);
@@ -747,7 +776,7 @@ function renderMethod() {
       Object.entries(b).map(([k, f]) => `<tr><td>${k}</td><td>${f.value} ${esc(f.unit)}</td><td>${esc(f.source)}</td><td>${f.year}</td></tr>`).join('')}</tbody></table></div>
     <h3>Giá nhiên liệu</h3><div class="tbl-wrap"><table><thead><tr><th>Mã</th><th>Tên</th><th class="num">Giá</th><th>Nguồn giá</th><th>Ngày áp dụng</th></tr></thead><tbody>${
       Object.entries(CFG.fuels).map(([k, f]) => `<tr><td>${k}</td><td>${esc(f.label)}</td><td class="num">${f.price_vnd == null ? '<span class="badge warn">chưa có giá</span>' : `${fmt(f.price_vnd)} ${esc(f.price_unit)}`}</td><td><small>${esc(f.price_source || '')}</small></td><td>${esc(f.price_date || '—')}</td></tr>`).join('')}</tbody></table></div>
-    <h3>Định tuyến &amp; baseline</h3><p>Khoảng cách ước tính = đường chim bay × ${CFG.routing.detour_factor} (đặt <code>OSRM_URL</code> để dùng đường thực). Baseline: lấy đơn theo thứ tự gốc, xếp vào xe đầu tiên còn chỗ (first-fit), không sắp xếp lại.</p>
+    <h3>Định tuyến &amp; baseline</h3><p>Khoảng cách ước tính = đường chim bay × ${CFG.routing.detour_factor} (ước tính; IT có thể nối dịch vụ bản đồ đường thực OSRM qua biến môi trường <code>OSRM_URL</code>). Baseline: lấy đơn theo thứ tự gốc, xếp vào xe đầu tiên còn chỗ (first-fit), không sắp xếp lại.</p>
     <h3>Theo dõi vị trí</h3><p>Tài xế chủ động bấm <b>Bắt đầu ca</b> mới chia sẻ vị trí; điện thoại gửi mỗi ${CFG.tracking?.ping_interval_s ?? 20} giây khi trang tài xế đang mở. Trình duyệt không cho theo dõi khi tắt màn hình/đóng trang — cần app di động nếu muốn theo dõi nền.</p>
     <h3>AI / ML</h3><p>Chưa có mô hình huấn luyện trên dữ liệu thật. Dữ liệu giao hàng thực tế (giờ đến, đúng/trễ, lý do thất bại, vệt GPS) đang được thu thập để làm nhãn cho giai đoạn ML.</p>`;
 }
