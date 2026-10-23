@@ -58,7 +58,8 @@ def test_same_route_fuel_switch_changes_only_fuel_terms(ctx):
     s = next(x for x in body["result"]["routes"] if x["vehicle_id"] == r["vehicle_id"])
     assert s["distance_km"] == r["distance_km"] and s["energy_amount"] == r["energy_amount"]
     assert s["co2_direct_kg"] == pytest.approx(r["energy_amount"] * ef(0.10), abs=1e-3)
-    assert s["energy_cost_vnd"] == pytest.approx(r["energy_amount"] * cfg["fuels"]["E10"]["price_vnd"], abs=1)
+    # energy_amount is shown rounded to 4 decimals; allow that rounding times the price
+    assert s["energy_cost_vnd"] == pytest.approx(r["energy_amount"] * cfg["fuels"]["E10"]["price_vnd"], abs=1 + 0.00005 * cfg["fuels"]["E10"]["price_vnd"])
     assert s["co2_biogenic_kg"] == pytest.approx(r["energy_amount"] * 0.10 * ETH, abs=1e-3)
     # Reusing the E5 consumption for E10 is flagged, not silently assumed (Phụ lục 2 §2).
     assert any("dùng lại mức tiêu hao" in w for w in body["result"]["totals"]["warnings"])

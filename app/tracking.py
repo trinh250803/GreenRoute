@@ -20,7 +20,7 @@ TRAIL_POINTS = 400
 
 def settings() -> dict:
     t = load_fuel_config().get("tracking", {})
-    return {"ping_interval_s": t.get("ping_interval_s", 20), "stale_after_s": t.get("stale_after_s", 300)}
+    return {"ping_interval_s": t.get("ping_interval_s", 10), "stale_after_s": t.get("stale_after_s", 300)}
 
 
 def _vehicle_track(db: dict, user: dict) -> dict:
@@ -39,6 +39,8 @@ def set_sharing(user: dict, on: bool) -> dict:
     with store.lock:
         db = store.load()
         tr = _vehicle_track(db, user)
+        if on and not tr.get("sharing"):
+            tr["since"] = time.time()
         tr["sharing"] = bool(on)
         tr["events"] = (tr.get("events", []) + [{"at": now_iso(), "event": "start" if on else "stop"}])[-50:]
         audit(db, user["username"], "location_sharing_" + ("on" if on else "off"), {"vehicle_id": user["vehicle_id"]})
@@ -72,6 +74,7 @@ def record_points(user: dict, data: dict) -> dict:
         merged = sorted(tr["points"] + pts, key=lambda x: x["ts"])
         tr["points"] = [p for p in merged if p["ts"] >= now - RETAIN_S][-MAX_POINTS:]
         tr["last"] = tr["points"][-1]
+        tr["last_rx"] = now  # server clock: phone clocks can be off
         store.save(db)
     return {"stored": len(pts)}
 
@@ -109,14 +112,18 @@ def board(db: dict) -> dict:
         route = next((r for r in plan["routes"] if r["vehicle_id"] == vid), None) if plan else None
         last = tr.get("last")
         age = None if not last else round(now - last["ts"])
+        sharing = bool(tr.get("sharing")) and tr.get("driver") == (drv or {}).get("username")
+        since = tr.get("since") or 0
+        # Shift just started and the phone has not sent a fix yet: waiting, not "signal lost".
+        waiting = sharing and (tr.get("last_rx") or 0) < since and now - since <= s["stale_after_s"]
         stops = route["stops"] if route else []
         nxt = next((x for x in stops if x["status"] == "pending"), None)
         done = sum(1 for x in stops if x["status"] != "pending")
         vehicles.append({
             "vehicle_id": vid,
             "driver": drv and {"username": drv["username"], "full_name": drv["full_name"]},
-            "sharing": bool(tr.get("sharing")) and tr.get("driver") == (drv or {}).get("username"),
-            "last": last, "age_s": age, "stale": age is None or age > s["stale_after_s"],
+            "sharing": sharing, "waiting_gps": waiting,
+            "last": last, "age_s": age, "stale": not waiting and (age is None or age > s["stale_after_s"]),
             "trail": [[p["lat"], p["lng"]] for p in _downsample(tr.get("points", []), TRAIL_POINTS)],
             "trail_km": round(_trail_km(tr.get("points", [])), 2),
             "stops": [{k: x.get(k) for k in ("order_id", "latitude", "longitude", "arrival", "window", "status")} for x in stops],

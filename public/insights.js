@@ -155,7 +155,7 @@ function miniMap(points) {
   setTimeout(() => {
     const el = document.getElementById('drawer-map'); if (!el || !points.length) return;
     drawerMap = L.map(el, { zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(drawerMap);
+    baseTiles(drawerMap);
     points.forEach(p => (p.line ? L.polyline(p.line, { color: p.color, weight: 3, opacity: .7 }) : L.marker(p.ll, { icon: p.icon })).addTo(drawerMap));
     const all = points.flatMap(p => (p.line ? p.line : [p.ll]));
     drawerMap.fitBounds(all, { padding: [24, 24], maxZoom: 16 });

@@ -145,13 +145,16 @@ def test_live_tracking(client, admin):
     # No tracking without the driver's explicit consent.
     assert client.post("/api/driver/location", headers=drv, json=ping).status_code == 409
     assert client.post("/api/driver/sharing", headers=drv, json={"on": True}).json()["sharing"] is True
+    # Shift started, no fix yet: "waiting for GPS", not "signal lost".
+    truck = next(v for v in client.get("/api/tracking", headers=admin).json()["vehicles"] if v["vehicle_id"] == "TRUCK-01")
+    assert truck["sharing"] and truck["waiting_gps"] and not truck["stale"]
     t0 = time.time() * 1000 - 300_000
     pts = [{"latitude": 10.78 + i * 0.001, "longitude": 106.70, "accuracy_m": 10, "ts": t0 + i * 30_000} for i in range(5)]
     assert client.post("/api/driver/location", headers=drv, json={"points": pts}).json()["stored"] == 5
     assert client.post("/api/driver/location", headers=drv, json={"latitude": 999, "longitude": 0}).status_code == 400
     board = client.get("/api/tracking", headers=admin).json()
     truck = next(v for v in board["vehicles"] if v["vehicle_id"] == "TRUCK-01")
-    assert truck["sharing"] and truck["last"]["lat"] == 10.784 and not truck["stale"]
+    assert truck["sharing"] and truck["last"]["lat"] == 10.784 and not truck["stale"] and not truck["waiting_gps"]
     assert len(truck["trail"]) == 5 and truck["trail_km"] > 0.3
     assert client.get("/api/tracking", headers=drv).status_code == 403
     client.post("/api/driver/sharing", headers=drv, json={"on": False})

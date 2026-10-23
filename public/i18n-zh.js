@@ -26,7 +26,7 @@ const I18N_ZH = {
     'Đơn đã phân công': '已分配订单', 'Xe sử dụng': '使用车辆', 'Tổng quãng đường': '总里程', 'Tổng chi phí': '总成本',
     'CO₂ trực tiếp': '直接 CO₂', 'Tiến độ giao': '配送进度', 'Tài xế online': '在线司机', 'chưa tối ưu': '未优化', 'chưa phát hành': '未发布',
     'Chưa có tuyến được phát hành.': '尚无已发布路线。', 'chưa gán tài xế': '未分配司机', 'chưa gán': '未分配', '✓ Hoàn thành tuyến': '✓ 路线已完成',
-    '⏸ Chưa bắt đầu ca': '⏸ 未开始班次', 'Xem': '查看', 'Phân tích': '分析', 'Hiệu quả': '效率', 'km / đơn': '公里 / 单',
+    '⏳ Đã bắt đầu ca · đang chờ GPS': '⏳ 已开始班次 · 等待 GPS', '⏸ Chưa bắt đầu ca': '⏸ 未开始班次', 'Xem': '查看', 'Phân tích': '分析', 'Hiệu quả': '效率', 'km / đơn': '公里 / 单',
     'Điểm / xe': '站点 / 车', 'Tải trung bình': '平均装载率', 'Xe dùng / xe sẵn sàng': '已用 / 可用车辆', 'Tỷ lệ km xe điện': '电动车里程占比',
     'Khối lượng TB / đơn': '平均每单重量', 'Giờ cao điểm (ước tính)': '高峰时段（估算）', 'chặng đi giờ cao điểm': '高峰时段路段',
     'phút trễ thêm (ước tính)': '额外延误分钟（估算）', 'đơn có nguy cơ trễ khung giờ': '可能错过时间窗的订单',

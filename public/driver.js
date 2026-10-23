@@ -5,9 +5,12 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const LABEL = { pending: 'Chưa giao', delivered: 'Đã giao', failed: 'Thất bại' };
 const CHECK = { ok: '📍 Đúng vị trí', far: '⚠ Xa điểm giao', missing: '❔ Không có định vị' };
 const BUFFER_KEY = 'gr_loc_buffer';
+const INTENT_KEY = 'gr_share_intent';  // the driver started a shift and has not ended it (survives reloads/server restarts)
+const intent = { get: () => { try { return localStorage.getItem(INTENT_KEY) === '1'; } catch { return false; } },
+                 set: on => { try { on ? localStorage.setItem(INTENT_KEY, '1') : localStorage.removeItem(INTENT_KEY); } catch { /* ignore */ } } };
 
 let ROUTE = null, REASONS = {}, TRACK = { sharing: false, ping_interval_s: 20 }, TAB = 'todo';
-let map, layers, meMarker, meCircle, watchId = null, lastFix = null, sendTimer = null, wakeLock = null, followMe = true;
+let map, layers, meMarker, meCircle, watchId = null, lastFix = null, sendTimer = null, wakeLock = null, followMe = true, sentSinceStart = false, resuming = false;
 
 function toast(msg, type = '') {
   const el = Object.assign(document.createElement('div'), { className: `toast ${type}`, textContent: msg });
@@ -26,9 +29,11 @@ async function flush() {
   try {
     await Auth.api('/api/driver/location', { method: 'POST', body: JSON.stringify({ points: buf }) });
     writeBuffer([]);
+    sentSinceStart = true;
     renderShare();
   } catch (e) {
-    if (/Chưa bật chia sẻ/.test(e.message)) { stopWatch(); TRACK.sharing = false; renderShare(); }
+    // The server forgot the shift (restart on the free host): resume it instead of making the driver restart it.
+    if (/Chưa bật chia sẻ/.test(e.message)) { if (intent.get()) resumeSharing(); else { stopWatch(); TRACK.sharing = false; renderShare(); } }
     // Network errors: keep the buffer and retry next tick.
   }
 }
@@ -41,6 +46,7 @@ function onFix(p) {
     const buf = readBuffer(), prev = buf[buf.length - 1];
     // Keep at most one point per 5 s to save battery and data.
     if (!prev || lastFix.ts - prev.ts >= 5000) writeBuffer([...buf, lastFix]);
+    if (!sentSinceStart) flush();  // first position goes out immediately, not after the first interval
   }
 }
 function onFixError(err) {
@@ -51,6 +57,8 @@ function onFixError(err) {
 function startWatch() {
   if (watchId != null || !navigator.geolocation) return;
   watchId = navigator.geolocation.watchPosition(onFix, onFixError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  // A coarse (network/cached) fix usually arrives in 1–2 s; the precise GPS fix replaces it when ready.
+  if (!lastFix) navigator.geolocation.getCurrentPosition(p => { if (!lastFix) onFix(p); }, () => {}, { enableHighAccuracy: false, maximumAge: 120000, timeout: 10000 });
   clearInterval(sendTimer);
   sendTimer = setInterval(flush, (TRACK.ping_interval_s || 20) * 1000);
   requestWakeLock();
@@ -64,16 +72,29 @@ async function requestWakeLock() {
   try { if ('wakeLock' in navigator && TRACK.sharing) wakeLock = await navigator.wakeLock.request('screen'); } catch { /* not supported */ }
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && TRACK.sharing) { requestWakeLock(); flush(); } });
+window.addEventListener('online', () => { if (TRACK.sharing) flush(); });
 
 async function setSharing(on) {
   if (on) {
     if (!window.isSecureContext) return toast('Trang phải chạy HTTPS thì trình duyệt mới cho lấy vị trí.', 'err');
     if (!navigator.geolocation) return toast('Thiết bị không hỗ trợ định vị.', 'err');
   }
+  if (!on) await flush();
   const { body } = await Auth.api('/api/driver/sharing', { method: 'POST', body: JSON.stringify({ on }) });
   TRACK = { ...TRACK, ...body };
-  if (on) { startWatch(); toast('Đã bắt đầu ca — đang chia sẻ vị trí', 'ok'); } else { await flush(); stopWatch(); toast('Đã kết thúc ca — ngừng chia sẻ vị trí'); }
+  intent.set(on);
+  if (on) { sentSinceStart = false; startWatch(); if (lastFix) onFix({ coords: { ...lastFix, accuracy: lastFix.accuracy_m, speed: lastFix.speed_mps }, timestamp: Date.now() }); toast('Đã bắt đầu ca — đang chia sẻ vị trí', 'ok'); }
+  else { stopWatch(); toast('Đã kết thúc ca — ngừng chia sẻ vị trí'); }
   renderShare();
+}
+async function resumeSharing() {
+  if (resuming) return;
+  resuming = true;
+  try {
+    const { body } = await Auth.api('/api/driver/sharing', { method: 'POST', body: JSON.stringify({ on: true }) });
+    TRACK = { ...TRACK, ...body };
+    sentSinceStart = false; startWatch(); await flush(); renderShare();
+  } catch { /* offline: next tick retries */ } finally { resuming = false; }
 }
 
 function renderShare() {
@@ -88,7 +109,7 @@ function renderShare() {
 function ensureMap() {
   if (map) return;
   map = L.map('d-map', { zoomControl: false, attributionControl: true }).setView([10.78, 106.68], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+  baseTiles(map, '&copy; OpenStreetMap');
   layers = L.layerGroup().addTo(map);
   map.on('dragstart', () => { followMe = false; });
 }
@@ -131,7 +152,8 @@ $('#btn-me').onclick = () => {
 async function load() {
   const { body } = await Auth.api('/api/driver/route');
   TRACK = { ...TRACK, ...body.tracking };
-  if (TRACK.sharing) startWatch();
+  if (TRACK.sharing) { intent.set(true); startWatch(); }
+  else if (intent.get()) await resumeSharing();  // shift still open on this phone but the server lost it
   renderShare();
   ROUTE = body.route; REASONS = body.fail_reasons || REASONS;
   if (!ROUTE) {

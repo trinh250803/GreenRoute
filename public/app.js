@@ -78,7 +78,7 @@ function go(id) {
   clearInterval(liveTimer);
   const loaders = {
     overview: loadOverview, plan: () => { ensurePlanMap(); setTimeout(() => { planMap.invalidateSize(); if (RUN) drawPlanMap(RUN); }, 60); },
-    live: () => { ensureLiveMap(); setTimeout(() => liveMap.invalidateSize(), 50); loadLive(); liveTimer = setInterval(() => loadLive().catch(() => {}), 15000); },
+    live: () => { ensureLiveMap(); setTimeout(() => liveMap.invalidateSize(), 50); loadLive(); liveTimer = setInterval(() => loadLive().catch(() => {}), 10000); },
     orders: loadOrders, vehicles: loadVehicles, fuel: renderFuelEditor, history: loadHistory, admin: loadAdmin, method: renderMethod,
   };
   Promise.resolve(loaders[page.id]?.()).catch(e => toast(e.message, 'err'));
@@ -151,6 +151,7 @@ function progressRow(v) {
 function signalBadge(v) {
   if (!v.driver) return '<span class="badge">—</span>';
   if (!v.sharing) return '<span class="badge">⏸ Chưa bắt đầu ca</span>';
+  if (v.waiting_gps) return '<span class="badge info">⏳ Đã bắt đầu ca · đang chờ GPS</span>';
   if (v.stale) return `<span class="badge warn">⚠ Mất tín hiệu · ${ago(v.age_s)}</span>`;
   return `<span class="badge ok"><span class="live-dot"></span> Online · ${ago(v.age_s)}</span>`;
 }
@@ -164,7 +165,7 @@ document.addEventListener('click', e => {
 function ensurePlanMap() {
   if (planMap) return;
   planMap = L.map('map', { zoomControl: true }).setView([10.78, 106.68], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(planMap);
+  baseTiles(planMap);
   planLayers = L.layerGroup().addTo(planMap);
 }
 function depotIcon() { return L.divIcon({ className: '', html: '<div class="veh-marker" style="--c:#142019">🏭 Kho</div>', iconSize: null }); }
@@ -294,7 +295,7 @@ $('#btn-depot-pick').onclick = () => {
   const lat = Number($('#depot-lat').value) || 10.78, lng = Number($('#depot-lng').value) || 106.70;
   if (!depotMap) {
     depotMap = L.map('depot-map').setView([lat, lng], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(depotMap);
+    baseTiles(depotMap);
     depotPin = L.marker([lat, lng], { draggable: true, icon: depotIcon() }).addTo(depotMap);
     depotPin.on('dragend', () => setDepotInputs(depotPin.getLatLng()));
     depotMap.on('click', ev => { depotPin.setLatLng(ev.latlng); setDepotInputs(ev.latlng); });
@@ -313,7 +314,7 @@ $('#btn-depot-pick').onclick = () => {
 function ensureLiveMap() {
   if (liveMap) return;
   liveMap = L.map('live-map').setView([10.78, 106.68], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(liveMap);
+  baseTiles(liveMap);
   liveLayers = L.layerGroup().addTo(liveMap);
 }
 let LIVE = null;
@@ -470,7 +471,7 @@ function ensureOrderMap() {
   if (orderMap || !$('#order-map')) return;
   const dep = [Number($('#depot-lat').value) || 10.78, Number($('#depot-lng').value) || 106.70];
   orderMap = L.map('order-map').setView(dep, 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(orderMap);
+  baseTiles(orderMap);
   L.marker(dep, { icon: depotIcon() }).addTo(orderMap);
   orderPin = L.marker(dep, { draggable: true, opacity: 0, zIndexOffset: 1000, icon: L.divIcon({ className: '', iconSize: null, html: '<div class="veh-marker" style="--c:#dc2626">📍 Giao</div>' }) }).addTo(orderMap);
   const pick = async ll => {

@@ -194,7 +194,7 @@
     "max_distance_m": 300
   },
   "tracking": {
-    "ping_interval_s": 20,
+    "ping_interval_s": 10,
     "stale_after_s": 300
   },
   "default_weights": {

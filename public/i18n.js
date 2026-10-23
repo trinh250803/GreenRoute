@@ -29,7 +29,7 @@ const I18N = (() => {
     'Đơn đã phân công': 'Orders assigned', 'Xe sử dụng': 'Vehicles used', 'Tổng quãng đường': 'Total distance', 'Tổng chi phí': 'Total cost',
     'CO₂ trực tiếp': 'Direct CO₂', 'Tiến độ giao': 'Delivery progress', 'Tài xế online': 'Drivers online', 'chưa tối ưu': 'not optimised', 'chưa phát hành': 'not published',
     'Chưa có tuyến được phát hành.': 'No published routes yet.', 'chưa gán tài xế': 'no driver', 'chưa gán': 'unassigned', '✓ Hoàn thành tuyến': '✓ Route completed',
-    '⏸ Chưa bắt đầu ca': '⏸ Shift not started', 'Xem': 'View', 'Phân tích': 'Analytics', 'Hiệu quả': 'Efficiency', 'km / đơn': 'km / order',
+    '⏳ Đã bắt đầu ca · đang chờ GPS': '⏳ Shift started · waiting for GPS', '⏸ Chưa bắt đầu ca': '⏸ Shift not started', 'Xem': 'View', 'Phân tích': 'Analytics', 'Hiệu quả': 'Efficiency', 'km / đơn': 'km / order',
     'Điểm / xe': 'Stops / vehicle', 'Tải trung bình': 'Average load', 'Xe dùng / xe sẵn sàng': 'Vehicles used / available', 'Tỷ lệ km xe điện': 'EV share of km',
     'Khối lượng TB / đơn': 'Avg parcel weight', 'Giờ cao điểm (ước tính)': 'Peak hours (estimate)', 'chặng đi giờ cao điểm': 'legs in peak hours',
     'phút trễ thêm (ước tính)': 'extra minutes (estimate)', 'đơn có nguy cơ trễ khung giờ': 'orders at risk of missing the window',

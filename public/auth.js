@@ -1,5 +1,18 @@
 'use strict';
 /* Shared login/session helper for the staff app (index.html) and the driver app (driver.html). */
+/* Base map tiles for every Leaflet map. tile.openstreetmap.org (no a/b/c subdomains) lets the browser reuse
+   one HTTP/2 connection; tiles that fail on a flaky network are retried a few times instead of staying grey. */
+function baseTiles(map, attribution = '&copy; OpenStreetMap contributors') {
+  const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution, keepBuffer: 4, updateWhenZooming: false });
+  layer.on('tileerror', ({ tile }) => {
+    const n = Number(tile.dataset.retry || 0);
+    if (n >= 3) return;
+    tile.dataset.retry = n + 1;
+    setTimeout(() => { tile.src = tile.src.split('#')[0] + '#r' + (n + 1); }, 800 * (n + 1));
+  });
+  return layer.addTo(map);
+}
+
 const Auth = (() => {
   const KEY = 'greenroute_token';
   let token = null;
