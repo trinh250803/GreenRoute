@@ -377,18 +377,10 @@ add(bullets(
     "<b>Mở</b>: xem lại kết quả lần đó ở trang Lập tuyến.",
     "<b>XLSX</b> / <b>CSV</b>: tải báo cáo gồm so sánh baseline với tối ưu, từng tuyến (thứ tự điểm, km, nhiên liệu, chi phí, CO₂, hệ số và nguồn), đơn chưa phân công kèm lý do, các kịch bản nhiên liệu đã chạy, kết quả giao thực tế (nếu đã phát hành) và các giả định (phiên bản hệ số, phạm vi phát thải, cách tính quãng đường).",
 ))
-add("<h2>6.5 Trợ lý AI</h2>")
-add(fig("65_ai", "Trợ lý AI"))
-add(steps(f"Bấm nút <b>Trợ lý AI</b> ở góc dưới bên phải.", f"Chọn một câu hỏi gợi ý {n(1)} hoặc tự gõ câu hỏi {n(2)}, ví dụ “Vì sao có đơn chưa được phân công?”."))
-add(bullets(
-    "Trợ lý chỉ dùng số liệu của phương án đang xem. Tên, số điện thoại, địa chỉ khách không được gửi đi.",
-    "Hiện trợ lý <b>chưa bật</b> trên bản online vì chưa cấu hình khóa API (ANTHROPIC_API_KEY). IT bật khi nhóm dự án đồng ý chi phí.",
-    "Câu trả lời của AI chỉ để tham khảo; số liệu chính thức là số trên các màn hình.",
-))
-add("<h2>6.6 Phương pháp và giả định</h2>")
+add("<h2>6.5 Phương pháp và giả định</h2>")
 add(fig("66_method", "Trang Phương pháp & giả định"))
 add("<p>Trang này ghi công thức tính nhiên liệu, CO₂, chi phí, nguồn và năm của hệ số, phạm vi phát thải (CO₂ chính là CO₂ hóa thạch; CO₂ sinh học và CO₂ điện lưới báo riêng), cách tính quãng đường và định nghĩa baseline. Dùng trang này khi cần đối chiếu số liệu.</p>")
-add("<h2>6.7 Đổi ngôn ngữ</h2>")
+add("<h2>6.6 Đổi ngôn ngữ</h2>")
 add(fig("67_lang_en", "Giao diện tiếng Anh"))
 add(f"<p>Bấm VI, EN hoặc 中文 {n(1)} ở góc trên bên phải. Lựa chọn được nhớ trên máy đó.</p>")
 

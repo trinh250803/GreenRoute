@@ -1,5 +1,5 @@
 'use strict';
-/* Analytics charts, order/vehicle detail drawer and the AI assistant panel.
+/* Analytics charts and the order/vehicle detail drawer.
    Uses helpers defined in app.js ($, esc, fmt, api, toast, colorFor, can, STATUS_LABEL). */
 
 // Validated reference palette (dataviz skill): categorical slots in fixed order, chart ink.
@@ -228,47 +228,7 @@ document.addEventListener('click', e => {
 }, true);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 
-// ---------------------------------------------------------------- AI assistant
-const AI = { history: [], configured: null };
-function mdLite(s) {
-  return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^\s*[-•]\s+(.*)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`).replace(/\n/g, '<br>');
-}
-function renderChat() {
-  const sugg = ['Tóm tắt tình hình giao hàng hôm nay', 'Xe nào chạy xa nhất và vì sao?', 'Vì sao có đơn chưa được phân công?', 'Làm sao giảm CO₂ mà không tăng nhiều chi phí?'];
-  $('#ai-msgs').innerHTML = (AI.configured === false ? alertBox('warn', 'Trợ lý AI chưa được cấu hình: quản trị viên cần đặt biến môi trường <code>ANTHROPIC_API_KEY</code> trên server.') : '') +
-    (AI.history.length ? AI.history.map(m => `<div class="msg ${m.role}">${m.role === 'assistant' ? mdLite(m.content) : esc(m.content)}</div>`).join('')
-      : `<div class="hint" style="padding:6px 2px">${T('Trợ lý chỉ dùng số liệu của phương án đang xem; không gửi tên, SĐT, địa chỉ khách.')}</div>` +
-        `<div class="chips">${sugg.map(s => `<button class="secondary sm" data-ask="${esc(s)}">${esc(s)}</button>`).join('')}</div>`);
-  $('#ai-msgs').scrollTop = $('#ai-msgs').scrollHeight;
-}
-async function askAI(q) {
-  q = q.trim(); if (!q) return;
-  AI.history.push({ role: 'user', content: q });
-  renderChat();
-  $('#ai-msgs').insertAdjacentHTML('beforeend', `<div class="msg assistant thinking">${T('Đang suy nghĩ…')}</div>`);
-  $('#ai-send').disabled = true;
-  try {
-    const { body } = await api('/api/assistant/ask', { method: 'POST', body: JSON.stringify({ question: q, history: AI.history.slice(0, -1) }) });
-    AI.history.push({ role: 'assistant', content: body.answer });
-  } catch (err) {
-    AI.history.pop();
-    toast(err.message, 'err');
-    if (/chưa được cấu hình/.test(err.message)) AI.configured = false;
-  } finally { $('#ai-send').disabled = false; renderChat(); }
-}
-async function toggleAI() {
-  const p = $('#ai-panel'); p.hidden = !p.hidden;
-  if (p.hidden) return;
-  if (AI.configured === null) { try { AI.configured = (await api('/api/assistant/status')).body.configured; } catch { AI.configured = null; } }
-  renderChat(); $('#ai-input').focus();
-}
 document.addEventListener('DOMContentLoaded', () => {
-  $('#ai-fab').onclick = toggleAI;
-  $('#ai-close').onclick = toggleAI;
-  $('#ai-clear').onclick = () => { AI.history = []; renderChat(); };
-  $('#ai-form').onsubmit = e => { e.preventDefault(); const v = $('#ai-input').value; $('#ai-input').value = ''; askAI(v); };
-  $('#ai-msgs').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) askAI(b.dataset.ask); };
   $('#drawer-close').onclick = closeDrawer;
   $('#drawer-backdrop').onclick = closeDrawer;
 });

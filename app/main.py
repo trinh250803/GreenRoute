@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from . import analytics, assistant, auth, dispatch, geocode, seed, store, tracking
+from . import analytics, auth, dispatch, geocode, seed, store, tracking
 from .admin_config import update_config
 from .auth import ROLES, STAFF, AuthError, audit, require
 from .compare import compare_totals, run_fuel_scenario
@@ -481,7 +481,7 @@ async def driver_outcome(order_id: str, request: Request, user=Depends(DRIVER)):
     return dispatch.record_outcome(user, order_id, await body_json(request))
 
 
-# ---------- Analytics, details, AI assistant ----------
+# ---------- Analytics, details ----------
 @app.get("/api/analytics")
 def get_analytics(user=Depends(ANY_STAFF)):
     return analytics.analytics(store.load())
@@ -501,20 +501,6 @@ def get_vehicle_detail(vehicle_id: str, user=Depends(ANY_STAFF)):
     if d is None:
         raise ApiError(404, "Không tìm thấy xe")
     return d
-
-
-@app.get("/api/assistant/status")
-def assistant_status(user=Depends(ANY_STAFF)):
-    return {"configured": assistant.configured(), "model": assistant.MODEL}
-
-
-@app.post("/api/assistant/ask")
-async def assistant_ask(request: Request, user=Depends(ANY_STAFF)):
-    b = await body_json(request)
-    db = store.load()
-    out = await run_in_threadpool(assistant.ask, db, b.get("question"), b.get("history") or [])
-    log_action(user, "assistant_ask", {"chars": len(b.get("question") or "")})
-    return out
 
 
 # ---------- Prediction (F-08): honest fallback until a model is trained and evaluated ----------

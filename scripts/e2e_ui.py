@@ -150,14 +150,6 @@ with sync_playwright() as p:
     page.screenshot(path=OUT / "11_vehicle_drawer.png")
     page.keyboard.press("Escape")
 
-    # AI assistant panel (no API key locally → "not configured" message).
-    page.click("#ai-fab")
-    page.wait_for_timeout(800)
-    page.click("#ai-msgs [data-ask]")
-    page.wait_for_timeout(1500)
-    page.screenshot(path=OUT / "12_ai_panel.png")
-    page.click("#ai-close")
-
     # English UI.
     page.click(".lang-switch [data-lang=en]")
     page.click("#menu [data-page=plan]")

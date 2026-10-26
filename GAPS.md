@@ -37,7 +37,7 @@
 | A18 | Không xem được chi tiết đơn/xe | 3.1 | ✅ Bấm mã đơn/mã xe ở mọi nơi (bảng, tuyến, bản đồ) → ngăn chi tiết: thông tin, phân công, kết quả giao, vị trí, lịch sử |
 | A19 | Dashboard ít phân tích | F-01, F-07 | ✅ 8 biểu đồ + chỉ số hiệu quả (chi phí theo xe, so với baseline, lịch ghé theo giờ, CO₂ theo nhiên liệu, theo quận, tải, khung giờ, lý do thất bại) |
 | A20 | Giờ cao điểm | Yêu cầu bổ sung | ⚠ Ước tính: đánh dấu chặng đi trong 07–09h / 16:30–19h, ước tính trễ và đơn có nguy cơ trễ. **Chưa có dữ liệu kẹt xe thực tế** (B13) |
-| A21 | Trợ lý AI | Yêu cầu bổ sung | ✅ Claude trả lời về phương án (không gửi tên/SĐT/địa chỉ khách). Cần `ANTHROPIC_API_KEY` trên server (B14) |
+| A21 | Trợ lý AI | Yêu cầu bổ sung | ⛔ Đã gỡ 26/10/2026: không có API key, không dùng. Code còn trong lịch sử git nếu cần bật lại. |
 | A22 | Song ngữ | Yêu cầu bổ sung | ✅ VI/EN cho giao diện; thông báo lỗi từ server vẫn tiếng Việt |
 | A16 | Giao diện khó dùng, chưa theo quy trình | Mục 3.2 | ✅ Menu theo vai trò, trang Tổng quan 5 bước, trang tài xế tối ưu cho điện thoại; kiểm thử bằng trình duyệt tự động (`scripts/e2e_ui.py`) |
 
@@ -57,5 +57,4 @@
 | B10 | Mức phạt giao trễ (ràng buộc mềm) | Hiện khung giờ là ràng buộc cứng |
 | B11 | Có cần app di động (Android/iOS) để theo dõi khi tắt màn hình không? | Hiện là web app; trình duyệt dừng GPS khi khóa màn hình |
 | B13 | Dùng nhà cung cấp giao thông thời gian thực nào (Google, TomTom, HERE, Vietmap)? Chi phí ai trả? | Hiện chỉ ước tính theo khung giờ |
-| B14 | Ai cấp và trả phí API key cho trợ lý AI? | Hiện tắt khi chưa có key |
 | B12 | Có cần thông báo pháp lý/đồng ý của tài xế về việc thu thập vị trí không? | Hiện tài xế chủ động bật/tắt; chỉ thu thập trong ca, lưu 24 giờ |

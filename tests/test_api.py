@@ -168,7 +168,7 @@ def test_non_utf8_body_is_400(client, admin):
     assert r.status_code == 400
 
 
-def test_analytics_details_and_assistant(client, admin, monkeypatch):
+def test_analytics_and_details(client, admin):
     run = client.post("/api/optimization/run", headers=admin, json={"time_limit_s": 1}).json()
     a = client.get("/api/analytics", headers=admin).json()
     assert a["run"]["id"] and a["by_vehicle"] and a["by_district"] and len(a["arrivals_by_hour"]) == 15
@@ -180,20 +180,6 @@ def test_analytics_details_and_assistant(client, admin, monkeypatch):
     assert client.get("/api/orders/NOPE/detail", headers=admin).status_code == 404
     vd = client.get(f'/api/vehicles/{run["optimized"]["routes"][0]["vehicle_id"]}/detail', headers=admin).json()
     assert vd["route"]["stops"]
-    # Without a key the assistant reports "not configured" instead of crashing.
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
-    assert client.get("/api/assistant/status", headers=admin).json()["configured"] is False
-    assert client.post("/api/assistant/ask", headers=admin, json={"question": "Xe nào chạy xa nhất?"}).status_code == 503
-
-
-def test_assistant_context_has_no_customer_pii(client, admin):
-    from app import store
-    from app.assistant import plan_context
-    ctx = plan_context(store.load())
-    assert "0120" not in ctx and "(synthetic)" not in ctx and "customer_name" not in ctx
-
-
 def test_session_survives_restart_and_lasts_a_day(client, admin, tmp_path, monkeypatch):
     from app import auth, store
     r = client.post("/api/auth/login", json={"username": "admin", "password": ADMIN_PW}).json()
