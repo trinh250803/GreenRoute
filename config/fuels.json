@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.22-prices",
+  "version": "2026.10.26-gia-2210",
   "emission_scope": "direct_combustion",
   "scope_note": "Phạm vi MVP: CO2 trực tiếp từ đốt nhiên liệu khi vận hành (tank-to-wheel). Xe điện: phát thải ống xả = 0; phát thải gián tiếp từ điện lưới được báo cáo RIÊNG, không cộng vào tổng CO2 trực tiếp.",
   "illustrative": true,
@@ -7,14 +7,14 @@
     "gasoline": {
       "value": 2.31,
       "unit": "kg CO2/L",
-      "source": "IPCC 2006 Vol.2 Ch.3 (giá trị mặc định, quy đổi theo khối lượng riêng)",
+      "source": "IPCC 2006 Vol.2 Ch.3 (69.300 kg CO2/TJ) × NCV 44,3 MJ/kg (Vol.2 Ch.1) × khối lượng riêng giả định 0,752 kg/L",
       "year": 2006,
       "geography": "global default"
     },
     "ethanol": {
       "value": 1.51,
       "unit": "kg CO2/L",
-      "source": "Tính từ hóa học đốt ethanol (CO2 sinh học)",
+      "source": "Hóa học đốt ethanol: 88,02/46,07 kg CO2/kg × 0,789 kg/L (CO2 sinh học, báo cáo riêng)",
       "year": 2006,
       "geography": "global default",
       "biogenic": true
@@ -22,7 +22,7 @@
     "diesel": {
       "value": 2.68,
       "unit": "kg CO2/L",
-      "source": "IPCC 2006 Vol.2 Ch.3 (giá trị mặc định)",
+      "source": "IPCC 2006 Vol.2 Ch.3 (74.100 kg CO2/TJ) × NCV 43,0 MJ/kg (Vol.2 Ch.1) × khối lượng riêng giả định 0,841 kg/L",
       "year": 2006,
       "geography": "global default"
     },
@@ -52,21 +52,21 @@
       "ethanol_share_volume": 0.05,
       "status": "supported",
       "official": true,
-      "price_vnd": 26971,
+      "price_vnd": 25361,
       "price_unit": "VND/L",
-      "price_source": "Giá bán lẻ tối đa kỳ điều hành 15h 15/10/2026 (Bộ Công Thương, theo ngoisao.vn 21/10/2026)",
-      "price_date": "2026-10-15"
+      "price_source": "Giá bán lẻ tối đa từ 15h00 22/10/2026 (Bộ Công Thương: https://moit.gov.vn/quan-ly-thi-truong/bo-cong-thuong-thong-tin-ve-dieu-hanh-gia-xang-dau-ngay-22-10.html)",
+      "price_date": "2026-10-22"
     },
     "E10": {
-      "label": "Xăng E10",
+      "label": "Xăng E10 RON95-III",
       "kind": "liquid",
       "ethanol_share_volume": 0.1,
       "status": "supported",
       "official": true,
-      "price_vnd": 27029,
+      "price_vnd": 25213,
       "price_unit": "VND/L",
-      "price_source": "Giá bán lẻ tối đa kỳ điều hành 15h 15/10/2026 (Bộ Công Thương, theo ngoisao.vn 21/10/2026)",
-      "price_date": "2026-10-15"
+      "price_source": "Giá bán lẻ tối đa từ 15h00 22/10/2026 (Bộ Công Thương: https://moit.gov.vn/quan-ly-thi-truong/bo-cong-thuong-thong-tin-ve-dieu-hanh-gia-xang-dau-ngay-22-10.html)",
+      "price_date": "2026-10-22"
     },
     "E20": {
       "label": "Xăng E20",
@@ -113,16 +113,16 @@
       "price_date": null
     },
     "diesel": {
-      "label": "Dầu diesel",
+      "label": "Dầu diesel 0.05S",
       "kind": "liquid",
       "ethanol_share_volume": 0,
       "status": "supported",
       "official": true,
-      "price_vnd": 29106,
+      "price_vnd": 29550,
       "price_unit": "VND/L",
       "factor_key": "diesel",
-      "price_source": "Giá bán lẻ tối đa kỳ điều hành 15h 15/10/2026 (Bộ Công Thương, theo ngoisao.vn 21/10/2026)",
-      "price_date": "2026-10-15"
+      "price_source": "Giá bán lẻ tối đa từ 15h00 22/10/2026 (Bộ Công Thương: https://moit.gov.vn/quan-ly-thi-truong/bo-cong-thuong-thong-tin-ve-dieu-hanh-gia-xang-dau-ngay-22-10.html)",
+      "price_date": "2026-10-22"
     },
     "electricity": {
       "label": "Điện lưới",
