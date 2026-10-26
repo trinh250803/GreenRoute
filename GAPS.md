@@ -33,7 +33,7 @@
 | A13 | ML dự đoán thời gian | F-08, G4 | ⏳ Chờ dữ liệu thật; A7 bắt đầu thu thập |
 | A14 | Không biết tài xế đang ở đâu, di chuyển thế nào | F-10 (đưa lên sớm theo yêu cầu) | ✅ Tài xế bấm *Bắt đầu ca* → gửi vị trí mỗi 20 giây (có bộ đệm khi mất mạng); điều phối viên xem bản đồ trực tiếp: vị trí, vệt đường, km đã đi, điểm tiếp theo, cảnh báo mất tín hiệu. ⚠ Chỉ chạy khi trang tài xế đang mở — theo dõi nền cần app di động (B11) |
 | A15 | Xác nhận vị trí khi giao | Chống khai khống | ✅ So GPS lúc báo giao với tọa độ đơn; ngưỡng do admin cấu hình |
-| A17 | Giá nhiên liệu cũ, không rõ nguồn | Phụ lục 1 §4 | ✅ Giá E5/E10/diesel kỳ 15/10/2026 (Bộ Công Thương) kèm nguồn + ngày áp dụng; loại chưa có giá niêm yết để trống thay vì bịa số. Tự động cập nhật giá: giai đoạn sau |
+| A17 | Giá nhiên liệu cũ, không rõ nguồn | Phụ lục 1 §4 | ✅ Giá E5/E10/diesel kỳ 22/10/2026 (Bộ Công Thương; cập nhật 26/10 theo bug log 002) kèm nguồn + ngày áp dụng; loại chưa có giá niêm yết để trống thay vì bịa số. Tự động cập nhật giá: giai đoạn sau |
 | A18 | Không xem được chi tiết đơn/xe | 3.1 | ✅ Bấm mã đơn/mã xe ở mọi nơi (bảng, tuyến, bản đồ) → ngăn chi tiết: thông tin, phân công, kết quả giao, vị trí, lịch sử |
 | A19 | Dashboard ít phân tích | F-01, F-07 | ✅ 8 biểu đồ + chỉ số hiệu quả (chi phí theo xe, so với baseline, lịch ghé theo giờ, CO₂ theo nhiên liệu, theo quận, tải, khung giờ, lý do thất bại) |
 | A20 | Giờ cao điểm | Yêu cầu bổ sung | ⚠ Ước tính: đánh dấu chặng đi trong 07–09h / 16:30–19h, ước tính trễ và đơn có nguy cơ trễ. **Chưa có dữ liệu kẹt xe thực tế** (B13) |

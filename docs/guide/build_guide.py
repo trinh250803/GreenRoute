@@ -163,7 +163,7 @@ add(bullets(
     "Các lần tối ưu đã chạy giữ nguyên phiên bản cũ. Muốn số liệu theo giá mới thì chạy tối ưu lại.",
     "Giá để trống = chưa có giá: hệ thống không tính chi phí cho nhiên liệu đó và hiện cảnh báo, không tự đoán số.",
 ))
-add(note("Giá xăng E5, E10, diesel đang theo kỳ điều hành 15/10/2026. Giá điện 3.000 ₫/kWh là giả định. Cần cập nhật khi Bộ Công Thương điều chỉnh giá.", "warn"))
+add(note("Giá xăng E5, E10, diesel đang theo kỳ điều hành 22/10/2026. Giá điện 3.000 ₫/kWh là giả định. Cần cập nhật khi Bộ Công Thương điều chỉnh giá.", "warn"))
 add("<h2>2.4 Nạp dữ liệu mẫu</h2>")
 add(fig("13_admin_data", "Nạp dữ liệu mẫu"))
 add(steps(f"Vào thẻ <b>Dữ liệu mẫu</b>, chọn bộ dữ liệu {n(1)}: TP.HCM (151 đơn, 12 xe) hoặc bộ nhỏ.", f"Bấm nút nạp {n(2)} và xác nhận."))
