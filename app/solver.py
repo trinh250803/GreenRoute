@@ -6,14 +6,15 @@ dropped through disjunctions and always reported with a reason (never silently).
 
 Objective per used vehicle (VND; weights need business approval — mục 6.2):
   km × (cost_per_km + energy_cost_per_km + co2_vnd_per_kg × co2_per_km)
-  + fixed_cost + time_vnd_per_min × route duration
+  where co2_per_km = fossil tailpipe CO2 + grid CO2 for EVs (biogenic CO2 from ethanol is not penalised)
+  + fixed_cost + (time_vnd_per_min + driver_vnd_per_hour / 60) × route duration
 """
 import math
 import time
 
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
-from .emissions import compute_trip, num, resolve_factor, rnd
+from .emissions import compute_trip, num, resolve_factor, resolve_price, rnd
 from .validation import fmt_time
 
 DEFAULT_WEIGHTS = {"co2_vnd_per_kg": 0.0, "time_vnd_per_min": 0.0}
@@ -26,6 +27,11 @@ STATUS = {0: "NOT_SOLVED", 1: "SUCCESS", 2: "PARTIAL_SUCCESS_LOCAL_OPTIMUM_NOT_R
           4: "FAIL_TIMEOUT", 5: "INVALID", 6: "INFEASIBLE", 7: "OPTIMAL"}
 
 
+def driver_rate(cfg: dict) -> float:
+    """Driver cost per hour (CR 005); 0 = not counted."""
+    return float(num((cfg.get("costs") or {}).get("driver_vnd_per_hour")) or 0.0)
+
+
 def prepare_vehicles(vehicles: list[dict], cfg: dict, weights: dict) -> list[dict]:
     out = []
     for v in vehicles:
@@ -33,11 +39,10 @@ def prepare_vehicles(vehicles: list[dict], cfg: dict, weights: dict) -> list[dic
             continue
         fuel = cfg["fuels"].get(v["fuel_blend_code"])
         rate = num(v.get("consumption_rate")) or 0.0
-        price = num(v.get("fuel_price"))
-        if price is None:
-            price = (num(fuel.get("price_vnd")) if fuel else None) or 0.0  # unknown price: excluded from the objective, flagged in results
+        price = resolve_price(v, cfg)["price"] or 0.0  # unknown price: excluded from the objective, flagged in results
         f = resolve_factor(v["fuel_blend_code"], cfg, v)
-        co2_per_km = 0.0 if fuel and fuel["kind"] == "electric" else rate / 100 * (f["value"] or 0.0)
+        # Operational CO2 = fossil share of tailpipe CO2 (ICE) or grid CO2 (EV); see bug log 003 / CR 004.
+        co2_per_km = rate / 100 * (f["value"] or 0.0) * (1 if fuel and fuel["kind"] == "electric" else f.get("fossil_share", 1))
         per_km = v["cost_per_km"] + rate / 100 * price + weights["co2_vnd_per_kg"] * co2_per_km
         out.append({**v, "_per_km": per_km})
     return out
@@ -104,7 +109,8 @@ def solve(orders, vehicles, matrix, cfg, weights=None, time_limit_s: float = 5) 
     W = {k: float(num(v) or 0) for k, v in W.items()}
     t0 = time.perf_counter()
     vs = prepare_vehicles(vehicles, cfg, W)
-    prob = Problem(orders, matrix, W)
+    # Driver wages are a cost per minute on the road, like the time weight.
+    prob = Problem(orders, matrix, {**W, "time_vnd_per_min": W["time_vnd_per_min"] + driver_rate(cfg) / 60})
     n = len(orders)
     routes = [[] for _ in vs]
     status = "NO_VEHICLE"
@@ -149,7 +155,7 @@ def solve(orders, vehicles, matrix, cfg, weights=None, time_limit_s: float = 5) 
             td.CumulVar(manager.NodeToIndex(i + 1)).SetRange(lo, hi)
             # Priority orders are costlier to drop.
             routing.AddDisjunction([manager.NodeToIndex(i + 1)], DROP_PENALTY * (1 + int(o["priority"])))
-        span_coef = int(round(W["time_vnd_per_min"] * COST_SCALE / 60))
+        span_coef = int(round(prob.weights["time_vnd_per_min"] * COST_SCALE / 60))
         for vi, v in enumerate(vs):
             st, et = int(v["start_time"] * 60), int(v["end_time"] * 60)
             td.CumulVar(routing.Start(vi)).SetRange(st, st)
@@ -263,6 +269,7 @@ def build_result(routes, vs, prob: Problem, cfg, pending, vehicles, meta) -> dic
             "load_volume_m3": rnd(ev["volume"], 3), "capacity_volume_m3": v.get("capacity_volume_m3"),
             "utilization_weight_pct": rnd(ev["weight"] / v["capacity_weight_kg"] * 100, 1),
             "operating_cost_vnd": round(ev["km"] * v["cost_per_km"] + v["fixed_cost_vnd"]),
+            "driver_cost_vnd": round(ev["duration_min"] / 60 * driver_rate(cfg)),
             "peak_legs": peak["peak_legs"], "peak_delay_min": peak["delay_min"], "late_risk": peak["late_risk"],
             "return_peak": peak["legs"][-1]["peak"],
             **trip, "distance_km": rnd(ev["km"], 3),
@@ -281,8 +288,11 @@ def _sum(routes, key):
 
 
 def summarize(routes: list[dict], n_orders: int, n_unassigned: int) -> dict:
-    km, co2 = _sum(routes, "distance_km"), _sum(routes, "co2_direct_kg")
+    # Headline CO2 is fossil CO2 (Scope 1); biogenic and grid CO2 are reported separately (bug log 003).
+    km, co2 = _sum(routes, "distance_km"), _sum(routes, "co2_fossil_kg")
+    grid = _sum(routes, "co2_grid_indirect_kg")
     energy, op = _sum(routes, "energy_cost_vnd"), _sum(routes, "operating_cost_vnd")
+    driver = sum(r.get("driver_cost_vnd") or 0 for r in routes)
     assigned = n_orders - n_unassigned
     warnings = list(dict.fromkeys(w for r in routes for w in r["warnings"]))
     return {
@@ -292,13 +302,15 @@ def summarize(routes: list[dict], n_orders: int, n_unassigned: int) -> dict:
         "distance_km": rnd(km, 2), "duration_min": rnd(_sum(routes, "duration_min"), 1),
         "operating_cost_vnd": None if op is None else round(op),
         "energy_cost_vnd": None if energy is None else round(energy),
-        "total_cost_vnd": None if energy is None else round(op + energy),
+        "driver_cost_vnd": round(driver),
+        "total_cost_vnd": None if energy is None else round(op + energy + driver),
         "co2_direct_kg": rnd(co2, 3), "co2_fossil_kg": rnd(_sum(routes, "co2_fossil_kg"), 3),
         "co2_biogenic_kg": rnd(_sum(routes, "co2_biogenic_kg"), 3),
-        "co2_grid_indirect_kg": rnd(_sum(routes, "co2_grid_indirect_kg"), 3),
+        "co2_grid_indirect_kg": rnd(grid, 3),
+        "co2_operational_kg": rnd(co2 + grid, 3) if co2 is not None and grid is not None else None,
         "co2_per_km": rnd(co2 / km, 4) if co2 is not None and km else None,
         "co2_per_order": rnd(co2 / assigned, 4) if co2 is not None and assigned else None,
-        "cost_per_order_vnd": round((op + energy) / assigned) if energy is not None and assigned else None,
+        "cost_per_order_vnd": round((op + energy + driver) / assigned) if energy is not None and assigned else None,
         "peak_legs": sum(r.get("peak_legs", 0) for r in routes),
         "peak_delay_min": rnd(sum(r.get("peak_delay_min", 0) for r in routes), 1),
         "late_risk": sum(r.get("late_risk", 0) for r in routes),

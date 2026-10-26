@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import threading
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,4 +27,12 @@ def save(db: dict) -> None:
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".tmp")
     tmp.write_text(json.dumps(db, ensure_ascii=False, indent=1), encoding="utf-8")
-    os.replace(tmp, p)
+    # Windows: a virus scanner or editor can hold the file for a moment; retry instead of failing the request.
+    for attempt in range(10):
+        try:
+            os.replace(tmp, p)
+            return
+        except PermissionError:
+            if attempt == 9:
+                raise
+            time.sleep(0.05 * (attempt + 1))

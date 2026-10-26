@@ -17,7 +17,7 @@ def haversine_matrix(points: list[dict], cfg: dict) -> dict:
     k = cfg["routing"]["detour_factor"]
     return {"matrix": [[haversine_km(a, b) * k for b in points] for a in points],
             "source": "haversine_estimate",
-            "note": f"Khoảng cách = đường chim bay × hệ số đường vòng {k} (ước tính, chưa theo đường thực tế)."}
+            "note": f"Fallback: khoảng cách ≈ đường chim bay × {k} (ước tính, chưa theo đường thực tế). Bản chính thức dùng OSRM."}
 
 
 def build_distance_matrix(points: list[dict], cfg: dict) -> dict:

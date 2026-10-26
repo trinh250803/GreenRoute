@@ -154,7 +154,7 @@ add("<h2>2.3 Hệ số phát thải, giá nhiên liệu và tham số</h2>")
 add(fig("12_admin_config", "Bảng hệ số và giá"))
 add(fig("12b_admin_config_save", "Ghi lý do và lưu phiên bản mới"))
 add(steps(
-    f"Vào thẻ <b>Hệ số, giá &amp; trọng số</b>. Sửa giá trị cần đổi trong các bảng {n(1)}: hệ số phát thải nền, giá nhiên liệu và ngày áp dụng, tốc độ theo loại xe, khung giờ cao điểm, giá trị mặc định cho đơn mới.",
+    f"Vào thẻ <b>Hệ số, giá &amp; trọng số</b>. Sửa giá trị cần đổi trong các bảng {n(1)}: hệ số phát thải nền, giá nhiên liệu và ngày áp dụng, nguồn giá điện cho xe điện, chi phí tài xế (VND/giờ, 0 = không tính), tốc độ theo loại xe, khung giờ cao điểm, giá trị mặc định cho đơn mới.",
     f"Ghi lý do, nguồn hoặc quyết định phê duyệt {n(2)} — bắt buộc.",
     f"Bấm <b>Lưu phiên bản mới</b> {n(3)}.",
 ))
@@ -163,7 +163,7 @@ add(bullets(
     "Các lần tối ưu đã chạy giữ nguyên phiên bản cũ. Muốn số liệu theo giá mới thì chạy tối ưu lại.",
     "Giá để trống = chưa có giá: hệ thống không tính chi phí cho nhiên liệu đó và hiện cảnh báo, không tự đoán số.",
 ))
-add(note("Giá xăng E5, E10, diesel đang theo kỳ điều hành 22/10/2026. Giá điện 3.000 ₫/kWh là giả định. Cần cập nhật khi Bộ Công Thương điều chỉnh giá.", "warn"))
+add(note("Giá xăng E5, E10, diesel đang theo kỳ điều hành 22/10/2026. Giá điện: chọn nguồn cho từng xe điện (điện lưới bình quân 2.204 ₫/kWh chưa VAT; hợp đồng kho và trạm sạc công cộng chờ Quản trị nhập giá); xe không chọn nguồn dùng 3.000 ₫/kWh minh họa. Cần cập nhật khi giá thay đổi.", "warn"))
 add("<h2>2.4 Nạp dữ liệu mẫu</h2>")
 add(fig("13_admin_data", "Nạp dữ liệu mẫu"))
 add(steps(f"Vào thẻ <b>Dữ liệu mẫu</b>, chọn bộ dữ liệu {n(1)}: TP.HCM (151 đơn, 12 xe) hoặc bộ nhỏ.", f"Bấm nút nạp {n(2)} và xác nhận."))
@@ -205,7 +205,8 @@ add(table(["Trường", "Cách nhập"], [
     ["Chi phí vận hành (VND/km)", "Khấu hao, bảo dưỡng, nhân công… <b>Không gồm tiền xăng/điện</b>, vì tiền năng lượng được tính riêng = lượng tiêu thụ × giá. Nhập cả tiền xăng sẽ bị tính 2 lần."],
     ["Chi phí cố định/ngày", "Tính một lần cho mỗi xe được dùng trong ngày."],
     ["Tiêu hao (/100 km)", "Xe xăng/dầu: lít/100 km. Xe điện: kWh/100 km. Để trống = không tính được nhiên liệu và CO₂ (có cảnh báo)."],
-    ["Giá năng lượng", "Để trống = dùng giá mặc định do Quản trị cấu hình."],
+    ["Nguồn giá điện (xe điện)", "Điện lưới / Hợp đồng điện tại kho / Trạm sạc công cộng / Tự nhập. Giá của từng nguồn do Quản trị cấu hình; nguồn chưa có giá thì không tính chi phí điện và có cảnh báo."],
+    ["Giá năng lượng", "Nhập = giá riêng của xe (ưu tiên cao nhất). Để trống = theo nguồn giá điện đã chọn, hoặc giá mặc định."],
     ["Hệ số phát thải tùy chỉnh, Nguồn hệ số", "Chỉ nhập khi có hệ số riêng có nguồn rõ ràng. Để trống = dùng hệ số chung."],
     ["Bắt đầu ca, Kết thúc ca", "Giờ xe rời kho và giờ phải về kho (HH:MM)."],
     ["Xác nhận nhiên liệu mô phỏng", "Bắt buộc khi chọn E20, E25, E85: hệ số các loại này chỉ là ước tính."],
@@ -253,10 +254,10 @@ add(steps(
     f"<b>Thời gian giải (giây)</b> {n(4)}: thời gian cho thuật toán tìm phương án, từ 1 đến 60 giây. 5–10 giây là đủ cho khoảng 150 đơn; nhiều đơn hơn nên tăng.",
     f"Bấm <b>Chạy tối ưu</b> {n(5)} và chờ đến khi nút trở lại bình thường.",
 ))
-add(note("Ô <b>Giá CO₂ (VND/kg)</b>: để 0 thì bộ tối ưu chỉ giảm chi phí. Nhập một số dương (ví dụ 5.000) thì mỗi kg CO₂ được tính như một khoản chi phí, nên bộ tối ưu ưu tiên xe ít phát thải hơn. Mức này cần nghiệp vụ phê duyệt."))
+add(note("Ô <b>Giá CO₂ (VND/kg)</b>: để 0 thì bộ tối ưu chỉ giảm chi phí. Nhập một số dương (ví dụ 5.000) thì mỗi kg CO₂ hóa thạch và mỗi kg CO₂ điện lưới (xe điện) được tính như một khoản chi phí, nên bộ tối ưu ưu tiên xe ít phát thải hơn. CO₂ sinh học từ ethanol không bị tính. Mức này cần nghiệp vụ phê duyệt."))
 add(fig("36_plan_result", "Kết quả tối ưu"))
 add(table(["Số", "Đọc kết quả"], [
-    [n(1), "Chỉ số chính: số đơn được phân công, số xe dùng, tổng km, tổng chi phí, CO₂ trực tiếp, CO₂ gián tiếp từ điện lưới (báo riêng), số chặng chạy giờ cao điểm. Khi baseline giao được ít đơn hơn, thẻ ghi “baseline chỉ giao … đơn” thay vì % để tránh so sánh không công bằng."],
+    [n(1), "Chỉ số chính: số đơn được phân công, số xe dùng, tổng km, tổng chi phí, CO₂ hóa thạch (chỉ số CO₂ chính), CO₂ sinh học từ ethanol và CO₂ gián tiếp từ điện lưới (hai mục này báo riêng, không cộng), số chặng chạy giờ cao điểm. Khi baseline giao được ít đơn hơn, thẻ ghi “baseline chỉ giao … đơn” thay vì % để tránh so sánh không công bằng."],
     [n(2), "Bản đồ: mỗi xe một màu; số trên chấm = thứ tự giao. Nét đứt = xe điện. Chấm đỏ = đơn chưa phân công. Nét đỏ đứt = chặng có thể kẹt giờ cao điểm (ước tính)."],
     [n(3), "Các thẻ: <b>Tuyến theo xe</b>, <b>So sánh baseline</b>, <b>Chưa phân công</b>."],
     [n(4), "<b>Phát hành cho tài xế</b> (4.7)."],
@@ -364,8 +365,8 @@ add(steps(
 ))
 add(fig("63_fuel_result", "Kết quả kịch bản so với phương án hiện tại"))
 add(bullets(
-    "Bảng so sánh: km, thời gian, chi phí, chi phí năng lượng, CO₂ trực tiếp, CO₂ điện lưới, CO₂/km, chi phí/đơn, CO₂/đơn, % thay đổi.",
-    "Dòng <b>CO₂ hóa thạch / sinh học</b>: phần CO₂ từ ethanol trong xăng sinh học được báo riêng.",
+    "Bảng so sánh: km, thời gian, chi phí, chi phí năng lượng, CO₂ hóa thạch, CO₂ sinh học, CO₂ điện lưới, CO₂ vận hành (hóa thạch + điện lưới), CO₂/km, chi phí/đơn, CO₂/đơn, % thay đổi.",
+    "CO₂ sinh học (phần ethanol trong E5/E10) được báo riêng và không cộng vào CO₂ hóa thạch, theo quy ước IPCC.",
     "Khung vàng: cảnh báo (thiếu giá, hệ số chỉ để mô phỏng, đang dùng lại mức tiêu hao cũ…). Đọc kỹ trước khi dùng số liệu.",
     "Đổi sang E20, E25, E85 phải tích “Xác nhận mô phỏng”. Đổi xe xăng sang điện không được phép vì loại xe không tương thích.",
 ))
@@ -386,7 +387,7 @@ add(bullets(
 ))
 add("<h2>6.6 Phương pháp và giả định</h2>")
 add(fig("66_method", "Trang Phương pháp & giả định"))
-add("<p>Trang này ghi công thức tính nhiên liệu, CO₂, chi phí, nguồn và năm của hệ số, phạm vi phát thải (CO₂ trực tiếp từ nhiên liệu khi vận hành), cách tính quãng đường và định nghĩa baseline. Dùng trang này khi cần đối chiếu số liệu.</p>")
+add("<p>Trang này ghi công thức tính nhiên liệu, CO₂, chi phí, nguồn và năm của hệ số, phạm vi phát thải (CO₂ chính là CO₂ hóa thạch; CO₂ sinh học và CO₂ điện lưới báo riêng), cách tính quãng đường và định nghĩa baseline. Dùng trang này khi cần đối chiếu số liệu.</p>")
 add("<h2>6.7 Đổi ngôn ngữ</h2>")
 add(fig("67_lang_en", "Giao diện tiếng Anh"))
 add(f"<p>Bấm VI, EN hoặc 中文 {n(1)} ở góc trên bên phải. Lựa chọn được nhớ trên máy đó.</p>")
@@ -400,7 +401,7 @@ add(table(["Tình huống", "Giải thích / cách xử lý"], [
     ["Tài xế không thấy tuyến", "Điều phối chưa phát hành, hoặc tài khoản tài xế chưa được gán xe (Quản trị kiểm tra), hoặc xe đó không có đơn trong phương án."],
     ["Đơn báo “Xa điểm giao”", "Tài xế bấm Đã giao khi cách điểm giao hơn 300 m (hoặc tọa độ đơn sai). Kiểm tra lại với tài xế và tọa độ đơn."],
     ["Chi phí hiện “—”", "Nhiên liệu của xe chưa có giá. Quản trị nhập giá ở Hệ số, giá & trọng số."],
-    ["Số liệu có dùng chính thức được không?", "Chưa. Hệ số phát thải là giá trị mặc định quốc tế, giá điện là giả định, quãng đường là ước tính (đường chim bay × 1,3). Cần nghiệp vụ phê duyệt nguồn trước khi dùng chính thức."],
+    ["Số liệu có dùng chính thức được không?", "Chưa. Hệ số xăng/diesel là giá trị mặc định IPCC, giá điện mặc định là minh họa, quãng đường là ước tính dự phòng (đường chim bay × 1,3) cho tới khi có máy chủ OSRM. Cần nghiệp vụ phê duyệt nguồn trước khi dùng chính thức."],
     ["Bị khóa đăng nhập", "Do nhập sai mật khẩu 5 lần. Chờ 5 phút hoặc nhờ Quản trị đặt lại mật khẩu."],
 ], widths=[200, 420]))
 add("<h2>Báo lỗi và đề xuất thay đổi</h2>")

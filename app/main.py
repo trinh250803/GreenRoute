@@ -391,7 +391,8 @@ async def run_optimization(request: Request, user=Depends(PLANNER)):
             "illustrative": cfg["illustrative"], "illustrative_note": cfg["illustrative_note"],
             "routing_source": dm["source"], "routing_note": dm["note"], "routing_fallback": dm.get("fallback_reason"),
             "solver": optimized["meta"]["algorithm"],
-            "cost_model": "Chi phí = km × cost_per_km (vận hành, ngoài năng lượng) + chi phí cố định/xe + năng lượng (lượng tiêu thụ × giá)",
+            "cost_model": "Chi phí = km × cost_per_km (vận hành, ngoài năng lượng) + chi phí cố định/xe + năng lượng (lượng tiêu thụ × giá)"
+                          f" + tài xế ({(cfg.get('costs') or {}).get('driver_vnd_per_hour', 0)} VND/giờ × thời gian tuyến)",
         },
         "optimized": optimized, "baseline": base, "comparison": compare_totals(base["totals"], optimized["totals"]), "scenarios": [],
     }
@@ -535,7 +536,9 @@ def report_rows(run: dict) -> dict:
             "plan": plan, "vehicle_id": r["vehicle_id"], "vehicle_type": r["vehicle_type"], "fuel": r["fuel_blend_code"], "stops": len(r["stops"]),
             "sequence": " > ".join(s["order_id"] for s in r["stops"]), "distance_km": r["distance_km"], "duration_min": r["duration_min"],
             "load_kg": r["load_weight_kg"], "operating_cost_vnd": r["operating_cost_vnd"], "energy": r["energy_amount"], "energy_unit": r["energy_unit"],
-            "energy_cost_vnd": r["energy_cost_vnd"], "co2_direct_kg": r["co2_direct_kg"], "co2_grid_indirect_kg": r["co2_grid_indirect_kg"],
+            "energy_cost_vnd": r["energy_cost_vnd"], "driver_cost_vnd": r.get("driver_cost_vnd", 0),
+            "price_used": r.get("price_used"), "price_source_used": r.get("price_source_used"), "co2_fossil_kg": r.get("co2_fossil_kg"), "co2_biogenic_kg": r.get("co2_biogenic_kg"),
+            "co2_grid_indirect_kg": r["co2_grid_indirect_kg"], "co2_tailpipe_total_kg": r["co2_direct_kg"],
             "factor_value": (r["factor"] or {}).get("value"), "factor_unit": (r["factor"] or {}).get("unit"),
             "factor_source": (r["factor"] or {}).get("source"), "factor_year": (r["factor"] or {}).get("year"),
         } for r in result["routes"]]

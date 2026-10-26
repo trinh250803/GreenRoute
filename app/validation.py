@@ -133,6 +133,15 @@ def validate_vehicles(rows: list[dict], cfg: dict) -> dict:
         if num(r.get("consumption_rate")) is None:
             warnings.append({"line": line, "vehicle_id": vid, "message": "thiếu consumption_rate — sẽ không tính phát thải/chi phí năng lượng"})
 
+        eps = str(r.get("electricity_price_source") or "").strip() or None
+        if eps and eps not in {*cfg.get("electricity_price_sources", {}), "custom"}:
+            errs.append(f'electricity_price_source "{eps}" không hợp lệ ({", ".join([*cfg.get("electricity_price_sources", {}), "custom"])})')
+        elif eps and cfg["fuels"].get(fuel, {}).get("kind") != "electric":
+            warnings.append({"line": line, "vehicle_id": vid, "message": "electricity_price_source chỉ dùng cho xe điện — bỏ qua"})
+            eps = None
+        if eps == "custom" and num(r.get("fuel_price")) is None:
+            errs.append("chọn nguồn giá điện “custom” thì phải nhập fuel_price (VND/kWh)")
+
         st = parse_time(r.get("start_time") if r.get("start_time") not in (None, "") else "07:00")
         et = parse_time(r.get("end_time") if r.get("end_time") not in (None, "") else "19:00")
         if _isnan(st) or _isnan(et) or et <= st:
@@ -147,7 +156,7 @@ def validate_vehicles(rows: list[dict], cfg: dict) -> dict:
             "capacity_weight_kg": cap_w, "capacity_volume_m3": cap_v,
             "cost_per_km": cpk, "fixed_cost_vnd": num(r.get("fixed_cost_vnd")) or 0,
             "fuel_blend_code": fuel, "consumption_rate": num(r.get("consumption_rate")),
-            "fuel_price": num(r.get("fuel_price")),
+            "fuel_price": num(r.get("fuel_price")), "electricity_price_source": eps,
             "emission_factor_value": num(r.get("emission_factor_value")),
             "emission_factor_unit": r.get("emission_factor_unit") or None,
             "factor_source": r.get("factor_source") or None, "factor_year": num(r.get("factor_year")),

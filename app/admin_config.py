@@ -36,6 +36,10 @@ EDITABLE = {
     r"order_defaults\.window_start": "time",
     r"order_defaults\.window_end": "time",
     r"order_defaults\.service_time_min": "number",
+    r"electricity_price_sources\.[^.]+\.price_vnd": "number",
+    r"electricity_price_sources\.[^.]+\.price_source": "text",
+    r"electricity_price_sources\.[^.]+\.price_date": "text",
+    r"costs\.driver_vnd_per_hour": "number",
     r"illustrative": "bool",
     r"illustrative_note": "text",
 }
@@ -100,6 +104,8 @@ def _set(cfg: dict, path: str, value):
 def update_config(actor: dict, changes: dict, reason: str) -> dict:
     if not reason or len(reason.strip()) < 5:
         raise AuthError(400, "Bắt buộc ghi lý do thay đổi (ví dụ: nguồn hệ số, quyết định phê duyệt)")
+    if not isinstance(changes, dict):
+        raise AuthError(400, "changes phải là đối tượng {đường_dẫn: giá_trị}")
     if not changes:
         raise AuthError(400, "Không có thay đổi")
     cfg = load_fuel_config()

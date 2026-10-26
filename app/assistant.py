@@ -22,7 +22,7 @@ Người hỏi là nhân viên (điều phối viên, quản lý đội xe, qu�
 
 Chỉ dựa trên DỮ LIỆU KẾ HOẠCH bên dưới. Nếu dữ liệu không đủ để trả lời, nói rõ là không có trong dữ liệu — không suy đoán số liệu.
 Phân biệt rõ: số liệu đo thực tế (kết quả giao do tài xế báo), số liệu kế hoạch (tuyến OR-Tools tính), và ước tính (giờ cao điểm, hệ số phát thải minh họa).
-Phạm vi phát thải: CO2 trực tiếp từ nhiên liệu vận hành; CO2 gián tiếp từ điện lưới được báo cáo riêng.
+Phạm vi phát thải: CO2 chính là CO2 hóa thạch (co2_fossil_kg); CO2 sinh học từ ethanol và CO2 điện lưới của xe điện báo cáo riêng; co2_operational_kg = hóa thạch + điện lưới.
 Khi đề xuất hành động (đổi xe, nới khung giờ, thêm xe…), nêu lý do từ dữ liệu và lưu ý rằng cần chạy lại tối ưu để xác nhận.
 Bạn không thể tự thay đổi dữ liệu hay chạy tối ưu; hãy hướng dẫn người dùng thao tác trên giao diện (Lập tuyến, Kịch bản nhiên liệu, Đội xe, Quản trị)."""
 

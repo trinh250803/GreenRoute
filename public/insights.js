@@ -101,7 +101,7 @@ async function loadAnalytics() {
       { label: T('Chi phí năng lượng'), data: a.by_vehicle.map(v => v.energy_cost_vnd ?? 0), ...barStyle(VIZ.s2) }] },
     options: { indexAxis: 'y', scales: axes({ horizontal: true, stacked: true }), plugins: { legend: legend(true), tooltip: tip(v => `${nf(v)} ₫`) } } });
 
-  const rows = a.comparison.rows.filter(r => r.change_pct != null && !['co2_grid_indirect_kg'].includes(r.metric));
+  const rows = a.comparison.rows.filter(r => r.change_pct != null && !['co2_grid_indirect_kg', 'co2_biogenic_kg', 'co2_operational_kg'].includes(r.metric));
   draw('ch-compare', { type: 'bar', data: { labels: rows.map(r => T(METRIC_LABEL[r.metric] || r.metric)), datasets: [{
       label: '', data: rows.map(r => r.change_pct), ...barStyle(VIZ.s1),
       // Diverging pair: blue = improvement (lower), red = regression (higher).
@@ -116,7 +116,8 @@ async function loadAnalytics() {
     options: { scales: axes({ stacked: true, count: true }), plugins: { legend: legend(true), tooltip: tip(v => `${nf(v)} ${T('điểm')}`) } } });
 
   draw('ch-co2', { type: 'bar', data: { labels: a.by_fuel.map(f => T(fuelLabel(f.fuel))), datasets: [
-      { label: T('CO₂ trực tiếp'), data: a.by_fuel.map(f => f.co2_direct_kg), ...barStyle(VIZ.s1) },
+      { label: T('CO₂ hóa thạch'), data: a.by_fuel.map(f => f.co2_fossil_kg), ...barStyle(VIZ.s1) },
+      { label: T('CO₂ sinh học (ethanol)'), data: a.by_fuel.map(f => f.co2_biogenic_kg), ...barStyle(VIZ.s3) },
       { label: T('CO₂ gián tiếp (điện lưới)'), data: a.by_fuel.map(f => f.co2_grid_indirect_kg), ...barStyle(VIZ.s2) }] },
     options: { scales: axes({ unit: ' kg' }), plugins: { legend: legend(true), tooltip: tip(v => `${nf(v, 2)} kg`) } } });
 
@@ -204,7 +205,7 @@ async function openVehicle(id) {
       ['Cập nhật', d.tracking.last ? new Date(d.tracking.last.ts * 1000).toLocaleTimeString('vi-VN') + ` · ±${d.tracking.last.acc ?? '?'} m` : '—']]))}
     ${section('Tuyến hôm nay', r ? kv([['Quãng đường', `${fmt(r.distance_km, 1)} km`], ['Ca', `${r.start}–${r.end}`], ['Tải trọng', `${r.load_weight_kg} kg (${r.utilization_weight_pct}%)`],
         ['Chi phí vận hành', `${fmt(r.operating_cost_vnd)} ₫`], ['Chi phí năng lượng', `${fmt(r.energy_cost_vnd)} ₫ · ${fmt(r.energy_amount, 2)} ${esc(r.energy_unit || '')}`],
-        ['CO₂ trực tiếp', `${fmt(r.co2_direct_kg, 2)} kg`], ['Giờ cao điểm', `${r.peak_legs} chặng · +${r.peak_delay_min}′${r.late_risk ? ` · <span class="bad">${r.late_risk} ${T('nguy cơ trễ')}</span>` : ''}`],
+        ['CO₂ hóa thạch', `${fmt(r.co2_fossil_kg, 2)} kg`], ['CO₂ sinh học', `${fmt(r.co2_biogenic_kg, 2)} kg`], ['CO₂ điện lưới', `${fmt(r.co2_grid_indirect_kg, 2)} kg`], ['Giờ cao điểm', `${r.peak_legs} chặng · +${r.peak_delay_min}′${r.late_risk ? ` · <span class="bad">${r.late_risk} ${T('nguy cơ trễ')}</span>` : ''}`],
         ['Đã xử lý', `${done} / ${r.stops.length}`]]) +
       `<ol class="stops" style="margin-top:10px">${r.stops.map((s, i) => `<li><span class="i">${i + 1}.</span>${orderLink(s.order_id)} <span class="muted">${s.arrival}${s.window ? ` · ${s.window}` : ''}</span> ${s.status && s.status !== 'pending' ? `<span class="badge ${s.status}">${STATUS_LABEL[s.status]}</span>` : ''}${s.peak ? ' <span title="giờ cao điểm">🚦</span>' : ''}</li>`).join('')}</ol>`
       : `<p class="hint">${T('Không có tuyến trong phương án hiện tại.')}</p>`)}

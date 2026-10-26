@@ -12,10 +12,13 @@ Formulas checked (Phụ lục 1 §3, Phụ lục 2 §1–2, mục 6):
   km              = Σ haversine(chặng) × detour_factor, kho → điểm giao … → kho
   nhiên liệu (L)  = km × tiêu hao (L/100km) / 100        | điện (kWh) tương tự
   EF pha ethanol  = (1 − x)·EF_xăng + x·EF_ethanol
-  CO₂ trực tiếp   = L × EF  (xe điện: 0; gián tiếp lưới = kWh × EF_lưới, báo riêng)
+  CO₂ hóa thạch   = L × (1 − x) × EF_xăng   (diesel: L × EF_diesel; xe điện: 0)
+  CO₂ sinh học    = L × x × EF_ethanol      (báo riêng)
+  CO₂ điện lưới   = kWh × EF_lưới           (báo riêng);  CO₂ vận hành = hóa thạch + điện lưới
   chi phí NL      = L (kWh) × giá
-  chi phí vận hành= km × cost_per_km + chi phí cố định
-  tổng chi phí    = vận hành + năng lượng;  CO₂/km = CO₂ / km;  /đơn = ÷ số đơn đã giao
+  chi phí vận hành= km × cost_per_km + chi phí cố định;  chi phí tài xế = giờ chạy × VND/giờ
+  giá điện        = giá riêng của xe > nguồn giá điện của xe > giá mặc định
+  tổng chi phí    = vận hành + năng lượng + tài xế;  CO₂/km = CO₂ / km;  /đơn = ÷ số đơn đã giao
   % thay đổi      = (tối ưu − baseline) / baseline × 100
 """
 import json
@@ -94,19 +97,35 @@ def recompute_route(route, run, cfg):
     fuel = cfg["fuels"][v["fuel_blend_code"]]
     rate = v.get("consumption_rate")
     amount = None if rate is None else km * rate / 100
-    price = v.get("fuel_price") if v.get("fuel_price") is not None else fuel.get("price_vnd")
+    # Price: the vehicle's own price > its electricity price source (EV) > the fuel default (CR 006).
+    eps = v.get("electricity_price_source")
+    if v.get("fuel_price") is not None:
+        price = v["fuel_price"]
+    elif fuel["kind"] == "electric" and eps == "custom":
+        price = None
+    elif fuel["kind"] == "electric" and eps in (cfg.get("electricity_price_sources") or {}):
+        price = cfg["electricity_price_sources"][eps]["price_vnd"]
+    else:
+        price = fuel.get("price_vnd")
     ef = emission_factor(v["fuel_blend_code"], cfg, v)
     electric = fuel["kind"] == "electric"
-    co2 = grid = None
+    co2 = bio = grid = None
     if amount is not None and ef is not None:
-        co2, grid = (0.0, amount * ef) if electric else (amount * ef, 0.0)
+        if electric:
+            co2, bio, grid = 0.0, 0.0, amount * ef
+        elif v.get("emission_factor_value") not in (None, "") or fuel.get("factor_key"):
+            co2, bio, grid = amount * ef, 0.0, 0.0          # custom or diesel factor: all fossil
+        else:
+            x, base = fuel["ethanol_share_volume"], cfg["base_factors"]
+            co2, bio, grid = amount * (1 - x) * base["gasoline"]["value"], amount * x * base["ethanol"]["value"], 0.0
     return {
         "vehicle": v, "legs": legs, "km": km, "arrivals": arrivals, "end": t, "duration": t - v["start_time"],
         "weight": sum(orders[s["order_id"]]["weight_kg"] for s in route["stops"]),
         "volume": sum(orders[s["order_id"]]["volume_m3"] for s in route["stops"]),
         "rate": rate, "amount": amount, "unit": "kWh" if electric else "L", "price": price, "ef": ef,
         "energy_cost": None if amount is None or price is None else amount * price,
-        "co2": co2, "grid": grid, "operating": km * v["cost_per_km"] + v["fixed_cost_vnd"],
+        "co2": co2, "bio": bio, "grid": grid, "operating": km * v["cost_per_km"] + v["fixed_cost_vnd"],
+        "driver": (t - v["start_time"]) / 60 * ((cfg.get("costs") or {}).get("driver_vnd_per_hour") or 0),
     }
 
 
@@ -120,7 +139,7 @@ def check_plan(c, name, plan, run, cfg):
           sorted(served + dropped) == sorted(all_ids), f"{len(served)} + {len(dropped)} = {len(all_ids)}")
     c.add(name, "Mọi đơn chưa phân công đều có lý do", all(u.get("message") for u in plan["unassigned"]))
 
-    sums = {"km": 0.0, "duration": 0.0, "energy": 0.0, "operating": 0.0, "co2": 0.0, "grid": 0.0}
+    sums = {"km": 0.0, "duration": 0.0, "energy": 0.0, "operating": 0.0, "co2": 0.0, "bio": 0.0, "grid": 0.0}
     missing_energy = missing_co2 = False
     for r in plan["routes"]:
         x, vid, v = recompute_route(r, run, cfg), r["vehicle_id"], None
@@ -142,14 +161,20 @@ def check_plan(c, name, plan, run, cfg):
               f'app {r["energy_amount"]} / tính lại {x["amount"] if x["amount"] is None else round(x["amount"], 4)}')
         c.add(g, "Chi phí năng lượng = lượng × giá", close(r["energy_cost_vnd"], x["energy_cost"], 1.0),
               f'app {r["energy_cost_vnd"]} / tính lại {x["energy_cost"] if x["energy_cost"] is None else round(x["energy_cost"])}')
-        c.add(g, "CO₂ trực tiếp = lượng × EF (xe điện = 0)", close(r["co2_direct_kg"], x["co2"], 1e-3),
-              f'app {r["co2_direct_kg"]} / tính lại {x["co2"] if x["co2"] is None else round(x["co2"], 4)}')
+        c.add(g, "CO₂ hóa thạch = L × (1 − x) × EF_xăng (diesel: L × EF; xe điện = 0)", close(r["co2_fossil_kg"], x["co2"], 1e-3),
+              f'app {r["co2_fossil_kg"]} / tính lại {x["co2"] if x["co2"] is None else round(x["co2"], 4)}')
+        c.add(g, "CO₂ sinh học = L × x × EF_ethanol (báo riêng)", close(r["co2_biogenic_kg"], x["bio"], 1e-3),
+              f'app {r["co2_biogenic_kg"]} / tính lại {x["bio"] if x["bio"] is None else round(x["bio"], 4)}')
         c.add(g, "CO₂ gián tiếp lưới điện (báo riêng)", close(r["co2_grid_indirect_kg"], x["grid"], 1e-3))
         if r.get("co2_fossil_kg") is not None and r["co2_direct_kg"]:
             c.add(g, "CO₂ hóa thạch + sinh học = CO₂ trực tiếp", close(r["co2_fossil_kg"] + r["co2_biogenic_kg"], r["co2_direct_kg"], 1e-3))
         c.add(g, "Chi phí vận hành = km × cost_per_km + cố định", close(r["operating_cost_vnd"], x["operating"], 1.0),
               f'app {r["operating_cost_vnd"]} / tính lại {round(x["operating"])}')
-        sums["km"] += x["km"]; sums["duration"] += x["duration"]; sums["operating"] += x["operating"]
+        # Route time is integer seconds per leg in the solver: allow the same ±1 min as the duration check.
+        per_min = ((cfg.get("costs") or {}).get("driver_vnd_per_hour") or 0) / 60
+        c.add(g, "Chi phí tài xế = thời gian tuyến (giờ) × VND/giờ", close(r.get("driver_cost_vnd", 0), x["driver"], 1.0 + per_min),
+              f'app {r.get("driver_cost_vnd", 0)} / tính lại {round(x["driver"])}')
+        sums["km"] += x["km"]; sums["duration"] += x["duration"]; sums["operating"] += x["operating"] + x["driver"]
         if x["energy_cost"] is None:
             missing_energy = True
         else:
@@ -157,7 +182,7 @@ def check_plan(c, name, plan, run, cfg):
         if x["co2"] is None:
             missing_co2 = True
         else:
-            sums["co2"] += x["co2"]; sums["grid"] += x["grid"]
+            sums["co2"] += x["co2"]; sums["bio"] += x["bio"]; sums["grid"] += x["grid"]
 
     t, assigned = plan["totals"], len(served)
     total_cost = None if missing_energy else sums["operating"] + sums["energy"]
@@ -167,10 +192,13 @@ def check_plan(c, name, plan, run, cfg):
     c.add(g, "Số xe dùng", t["vehicles_used"] == len(plan["routes"]))
     c.add(g, "Số đơn giao / chưa giao", t["orders_assigned"] == assigned and t["orders_unassigned"] == len(plan["unassigned"]))
     c.add(g, "Chi phí năng lượng", close(t["energy_cost_vnd"], None if missing_energy else sums["energy"], len(plan["routes"]) + 1))
-    c.add(g, "Tổng chi phí = vận hành + năng lượng", close(t["total_cost_vnd"], total_cost, len(plan["routes"]) * 2 + 1),
+    per_min = ((cfg.get("costs") or {}).get("driver_vnd_per_hour") or 0) / 60
+    c.add(g, "Tổng chi phí = vận hành + năng lượng + tài xế", close(t["total_cost_vnd"], total_cost, len(plan["routes"]) * (2 + per_min) + 1),
           f'app {t["total_cost_vnd"]} / tính lại {total_cost if total_cost is None else round(total_cost)}')
-    c.add(g, "Tổng CO₂ trực tiếp", close(t["co2_direct_kg"], co2, 0.005), f'app {t["co2_direct_kg"]} / tính lại {co2 if co2 is None else round(co2, 3)}')
-    c.add(g, "CO₂ gián tiếp lưới điện", close(t["co2_grid_indirect_kg"], None if missing_co2 else sums["grid"], 0.005))
+    c.add(g, "Tổng CO₂ hóa thạch (chỉ số chính)", close(t["co2_fossil_kg"], co2, 0.005), f'app {t["co2_fossil_kg"]} / tính lại {co2 if co2 is None else round(co2, 3)}')
+    c.add(g, "Tổng CO₂ sinh học (báo riêng)", close(t["co2_biogenic_kg"], None if missing_co2 else sums["bio"], 0.005))
+    c.add(g, "CO₂ gián tiếp lưới điện (báo riêng)", close(t["co2_grid_indirect_kg"], None if missing_co2 else sums["grid"], 0.005))
+    c.add(g, "CO₂ vận hành = hóa thạch + điện lưới", close(t.get("co2_operational_kg"), None if missing_co2 else sums["co2"] + sums["grid"], 0.005))
     c.add(g, "CO₂/km = CO₂ ÷ km", close(t["co2_per_km"], None if co2 is None else co2 / sums["km"], 1e-3))
     c.add(g, "CO₂/đơn = CO₂ ÷ số đơn đã giao", close(t["co2_per_order"], None if co2 is None or not assigned else co2 / assigned, 1e-3))
     c.add(g, "Chi phí/đơn = tổng chi phí ÷ số đơn đã giao",
@@ -210,7 +238,12 @@ def worked_example(run, cfg):
     if x["amount"] is not None:
         lines.append(f'  Nhiên liệu = {x["km"]:.3f} × {x["rate"]} / 100 = {x["amount"]:.4f} {x["unit"]}   (app: {r["energy_amount"]})')
         if x["co2"] is not None:
-            lines.append(f'  CO₂ = {x["amount"]:.4f} × {x["ef"]:.4f} = {x["co2"]:.4f} kg   (app: {r["co2_direct_kg"]})')
+            if f.get("factor_key"):
+                lines.append(f'  CO₂ hóa thạch = {x["amount"]:.4f} × {x["ef"]:.4f} = {x["co2"]:.4f} kg   (app: {r["co2_fossil_kg"]})')
+            else:
+                b = cfg["base_factors"]; xs = f["ethanol_share_volume"]
+                lines.append(f'  CO₂ hóa thạch = {x["amount"]:.4f} × {1 - xs:g} × {b["gasoline"]["value"]} = {x["co2"]:.4f} kg   (app: {r["co2_fossil_kg"]})')
+                lines.append(f'  CO₂ sinh học  = {x["amount"]:.4f} × {xs:g} × {b["ethanol"]["value"]} = {x["bio"]:.4f} kg   (app: {r["co2_biogenic_kg"]})')
         if x["price"] is not None:
             lines.append(f'  Chi phí NL = {x["amount"]:.4f} × {x["price"]:,} = {x["energy_cost"]:,.0f} ₫   (app: {r["energy_cost_vnd"]:,})')
     lines.append(f'  Vận hành = {x["km"]:.3f} × {v["cost_per_km"]:,} + {v["fixed_cost_vnd"]:,} = {x["operating"]:,.0f} ₫   (app: {r["operating_cost_vnd"]:,})')

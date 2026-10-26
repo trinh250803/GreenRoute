@@ -14,7 +14,8 @@ const PALETTE = ['#16a34a', '#2563eb', '#d97706', '#9333ea', '#dc2626', '#0891b2
 const colorFor = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; };
 const METRIC_LABEL = {
   distance_km: 'Quãng đường (km)', duration_min: 'Tổng thời gian (phút)', total_cost_vnd: 'Tổng chi phí (VND)',
-  energy_cost_vnd: 'Chi phí năng lượng (VND)', co2_direct_kg: 'CO₂ trực tiếp (kg)', co2_grid_indirect_kg: 'CO₂ gián tiếp điện lưới (kg)',
+  energy_cost_vnd: 'Chi phí năng lượng (VND)', driver_cost_vnd: 'Chi phí tài xế (VND)', co2_fossil_kg: 'CO₂ hóa thạch (kg)', co2_biogenic_kg: 'CO₂ sinh học (kg)',
+  co2_grid_indirect_kg: 'CO₂ gián tiếp điện lưới (kg)', co2_operational_kg: 'CO₂ vận hành: hóa thạch + điện lưới (kg)',
   co2_per_km: 'CO₂ / km (kg)', cost_per_order_vnd: 'Chi phí / đơn (VND)', co2_per_order: 'CO₂ / đơn (kg)',
   vehicles_used: 'Số xe dùng', orders_unassigned: 'Đơn chưa phân công',
 };
@@ -116,7 +117,7 @@ async function loadOverview() {
     ['🚚 Xe sử dụng', t ? t.vehicles_used : '—', `${avail} xe sẵn sàng`, '--blue'],
     ['🛣 Tổng quãng đường', t ? `${fmt(t.distance_km, 1)} km` : '—', t ? `${fmt(t.duration_min / 60, 1)} giờ xe chạy` : '', '--violet'],
     ['💰 Tổng chi phí', t ? `${fmt(t.total_cost_vnd / 1000, 0)}k ₫` : '—', t?.cost_per_order_vnd ? `${fmt(t.cost_per_order_vnd)} ₫/đơn` : '', '--amber'],
-    ['🌿 CO₂ trực tiếp', t ? `${fmt(t.co2_direct_kg, 1)} kg` : '—', t?.co2_per_order != null ? `${fmt(t.co2_per_order * 1000, 0)} g/đơn` : '', '--brand'],
+    ['🌿 CO₂ hóa thạch', t ? `${fmt(t.co2_fossil_kg, 1)} kg` : '—', t?.co2_per_order != null ? `${fmt(t.co2_per_order * 1000, 0)} g/đơn` : '', '--brand'],
     ['✅ Tiến độ giao', total ? `${Math.round((counts.delivered + counts.failed) / total * 100)}%` : '—', total ? `${counts.delivered}/${total} thành công` : 'chưa phát hành', '--blue'],
     ['📡 Tài xế online', `${sharing}`, `${live.vehicles.length} xe trong kế hoạch`, '--red'],
   ].map(([l, v, d, c]) => `<div class="kpi" style="--accent:var(${c})"><div class="l">${l}</div><div class="v">${v}</div><div class="d muted">${d}</div></div>`).join('');
@@ -221,7 +222,8 @@ function renderRun(run) {
     ['🚚 Xe sử dụng', t.vehicles_used, vsBase('vehicles_used'), '--blue'],
     ['🛣 Quãng đường', `${fmt(t.distance_km, 1)} km`, vsBase('distance_km'), '--violet'],
     ['💰 Tổng chi phí', `${fmt(t.total_cost_vnd)} ₫`, `${fmt(t.cost_per_order_vnd)} ₫/đơn · ${deltaHtml(cmp.cost_per_order_vnd)}`, '--amber'],
-    ['🌿 CO₂ trực tiếp', `${fmt(t.co2_direct_kg, 2)} kg`, `${fmt((t.co2_per_order ?? 0) * 1000)} g/đơn · ${deltaHtml(cmp.co2_per_order)}`, '--brand'],
+    ['🌿 CO₂ hóa thạch', `${fmt(t.co2_fossil_kg, 2)} kg`, `${fmt((t.co2_per_order ?? 0) * 1000)} g/đơn · ${deltaHtml(cmp.co2_per_order)}`, '--brand'],
+    ['🌱 CO₂ sinh học (ethanol)', `${fmt(t.co2_biogenic_kg, 2)} kg`, 'báo cáo riêng, không cộng', '--muted'],
     ['⚡ CO₂ gián tiếp (điện)', `${fmt(t.co2_grid_indirect_kg, 2)} kg`, 'báo cáo riêng, không cộng', '--muted'],
     ['🚦 Giờ cao điểm', `${t.peak_legs ?? 0} chặng`, `+${fmt(t.peak_delay_min)}′ ước tính · ${t.late_risk ?? 0} đơn nguy cơ trễ`, '--red'],
   ].map(([l, v, d, c]) => `<div class="kpi" style="--accent:var(${c})"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
@@ -231,7 +233,7 @@ function renderRun(run) {
     return `<div class="item"><div class="top"><span class="dot" style="background:${c}"></span><a href="#" class="oid id" data-vehicle="${esc(r.vehicle_id)}">${esc(r.vehicle_id)}</a>
         <span class="badge">${esc(vt)}</span><span class="badge ${r.fuel_blend_code === 'electricity' ? 'info' : ''}">${esc(CFG.fuels[r.fuel_blend_code]?.label || r.fuel_blend_code)}</span>
         <span style="margin-left:auto" class="muted">${r.start}–${r.end}</span></div>
-      <div class="meta"><span>📍 ${r.stops.length} điểm</span><span>🛣 ${fmt(r.distance_km, 1)} km</span><span>💰 ${fmt(r.operating_cost_vnd + (r.energy_cost_vnd ?? 0))} ₫</span><span>🌿 ${fmt(r.co2_direct_kg, 2)} kg</span>${r.peak_legs ? `<span>🚦 ${r.peak_legs} chặng giờ cao điểm · +${fmt(r.peak_delay_min)}′</span>` : ''}${r.late_risk ? `<span class="bad">⚠ ${r.late_risk} nguy cơ trễ</span>` : ''}</div>
+      <div class="meta"><span>📍 ${r.stops.length} điểm</span><span>🛣 ${fmt(r.distance_km, 1)} km</span><span>💰 ${fmt(r.operating_cost_vnd + (r.energy_cost_vnd ?? 0))} ₫</span><span title="CO₂ hóa thạch${r.co2_grid_indirect_kg ? ' · điện lưới' : ''}">🌿 ${fmt(r.co2_grid_indirect_kg ? r.co2_grid_indirect_kg : r.co2_fossil_kg, 2)} kg${r.co2_grid_indirect_kg ? ' ⚡' : ''}</span>${r.peak_legs ? `<span>🚦 ${r.peak_legs} chặng giờ cao điểm · +${fmt(r.peak_delay_min)}′</span>` : ''}${r.late_risk ? `<span class="bad">⚠ ${r.late_risk} nguy cơ trễ</span>` : ''}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><div class="progress" style="flex:1"><span class="p-ok" style="width:${Math.min(r.utilization_weight_pct, 100)}%;background:${c}"></span></div><small class="muted">tải ${r.load_weight_kg}/${r.capacity_weight_kg} kg</small></div>
       <details><summary>Thứ tự giao &amp; hệ số phát thải</summary><ol class="stops">${r.stops.map((s, i) => `<li><span class="i">${i + 1}.</span><a href="#" class="oid" data-order="${esc(s.order_id)}">${esc(s.order_id)}</a><span class="muted">${s.arrival}${s.window ? ` · khung ${s.window}` : ''}${s.wait_min ? ` · chờ ${s.wait_min}′` : ''}</span>${s.peak ? ` <span title="giờ cao điểm +${s.peak_delay_min}′">🚦</span>` : ''}${s.late_risk ? ' <span class="badge bad">nguy cơ trễ</span>' : ''}</li>`).join('')}</ol>
       <p class="hint" style="margin:8px 0 0">${r.factor ? `Hệ số ${r.factor.value} ${esc(r.factor.unit)} — ${esc(r.factor.source)} (${r.factor.year ?? '?'})${r.factor.official ? '' : ' <span class="badge sim">mô phỏng</span>'}` : 'Không có hệ số'}</p></details></div>`;
@@ -560,7 +562,7 @@ async function loadVehicles() {
       <td>${v.driver ? esc(v.driver) : '<span class="badge warn">chưa gán</span>'}</td>
       <td>${esc(fu?.label)} ${fu && !fu.official ? '<span class="badge sim">mô phỏng</span>' : ''}</td><td class="num">${v.capacity_weight_kg} kg</td><td class="num">${v.capacity_volume_m3 ?? '—'} m³</td>
       <td class="num">${fmt(v.cost_per_km)}</td><td class="num">${fmt(v.fixed_cost_vnd)}</td><td class="num">${v.consumption_rate ?? '<span class="badge warn">thiếu</span>'} ${fu?.kind === 'electric' ? 'kWh' : 'L'}</td>
-      <td class="num" title="${esc(v.fuel_price == null ? fu?.price_source || '' : 'Giá nhập riêng cho xe')}">${fmt(v.fuel_price ?? fu?.price_vnd)}${v.fuel_price == null ? `<br><small class="muted">mặc định${fu?.price_date ? ` · ${fu.price_date.split('-').reverse().join('/')}` : ''}</small>` : ''}</td><td>${t2(v.start_time)}–${t2(v.end_time)}</td>
+      <td class="num" title="${esc(v.fuel_price != null ? 'Giá nhập riêng cho xe' : v.electricity_price_source ? CFG.electricity_price_sources?.[v.electricity_price_source]?.price_source || '' : fu?.price_source || '')}">${fmt(v.fuel_price ?? (v.electricity_price_source ? CFG.electricity_price_sources?.[v.electricity_price_source]?.price_vnd : fu?.price_vnd))}${v.fuel_price == null ? `<br><small class="muted">mặc định${fu?.price_date ? ` · ${fu.price_date.split('-').reverse().join('/')}` : ''}</small>` : ''}</td><td>${t2(v.start_time)}–${t2(v.end_time)}</td>
       <td>${v.available ? '<span class="badge ok">sẵn sàng</span>' : '<span class="badge bad">nghỉ</span>'}</td>
       <td>${can('admin', 'fleet_manager') ? `<button class="danger sm" data-del-veh="${esc(v.vehicle_id)}">Xóa</button>` : ''}</td></tr>`; }).join('')
   }</tbody></table></div>` : empty('🚚', 'Chưa có xe nào.');
@@ -577,6 +579,14 @@ $('#btn-vehicles-import').onclick = e => busy(e.target, async () => {
   $('#vehicles-report').innerHTML = reportHtml(body); loadVehicles();
 });
 $('#vf-type').onchange = () => { $('#vf-fuel').innerHTML = fuelOptions($('#vf-type').value); };
+// CR 006: electricity price source per EV; "custom" = the price typed in "Giá năng lượng".
+function epsOptions(selected) {
+  const src = CFG.electricity_price_sources || {};
+  return [['', `Mặc định (${fmt(CFG.fuels.electricity?.price_vnd)} ₫/kWh, minh họa)`],
+    ...Object.entries(src).map(([k, s]) => [k, `${s.label} — ${s.price_vnd == null ? 'chưa có giá' : `${fmt(s.price_vnd)} ₫/kWh`}`]),
+    ['custom', 'Tự nhập (ô Giá năng lượng)']]
+    .map(([k, l]) => `<option value="${k}" ${k === (selected || '') ? 'selected' : ''}>${esc(l)}</option>`).join('');
+}
 $('#vehicle-form').onsubmit = async e => {
   e.preventDefault();
   const fd = new FormData(e.target), data = Object.fromEntries(fd);
@@ -625,7 +635,7 @@ $('#btn-scenario').onclick = e => busy(e.target, async () => {
     ${alertBox('info', esc(body.basis_note))}
     <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Chỉ số</th><th class="num">Phương án hiện tại</th><th class="num">Kịch bản</th><th class="num">Thay đổi</th></tr></thead><tbody>${
       body.comparison.rows.map(r => `<tr><td>${METRIC_LABEL[r.metric] || r.metric}</td><td class="num">${fmt(r.reference, 3)}</td><td class="num">${fmt(r.candidate, 3)}</td><td class="num">${r.change_pct == null ? '—' : deltaHtml(r.change_pct)}</td></tr>`).join('')
-    }<tr><td>CO₂ hóa thạch / sinh học (kg)</td><td colspan="3">${fmt(t.co2_fossil_kg, 3)} / ${fmt(t.co2_biogenic_kg, 3)} <small class="muted">(CO₂ sinh học từ ethanol báo cáo riêng)</small></td></tr></tbody></table></div>
+    }</tbody></table></div>
     ${t.warnings.map(w => alertBox('warn', `⚠ ${esc(w)}`)).join('')}</div>`;
   toast('Đã chạy kịch bản', 'ok');
 });
@@ -633,10 +643,10 @@ $('#btn-scenario').onclick = e => busy(e.target, async () => {
 // ---------------------------------------------------------------- History
 async function loadHistory() {
   const { body: runs } = await api('/api/optimization');
-  $('#history').innerHTML = runs.length ? `<div class="tbl-wrap"><table><thead><tr><th>Thời điểm</th><th>Người chạy</th><th class="num">Đơn</th><th class="num">Xe</th><th class="num">km</th><th class="num">Chi phí</th><th class="num">CO₂ (kg)</th><th></th></tr></thead><tbody>${
+  $('#history').innerHTML = runs.length ? `<div class="tbl-wrap"><table><thead><tr><th>Thời điểm</th><th>Người chạy</th><th class="num">Đơn</th><th class="num">Xe</th><th class="num">km</th><th class="num">Chi phí</th><th class="num">CO₂ hóa thạch (kg)</th><th></th></tr></thead><tbody>${
     runs.map(r => `<tr><td>${new Date(r.created_at).toLocaleString('vi-VN')} ${r.published ? '<span class="badge ok">đang phát hành</span>' : ''}</td><td>${esc(r.created_by || '')}</td>
       <td class="num">${r.totals.orders_assigned}/${r.totals.orders_total}</td><td class="num">${r.totals.vehicles_used}</td>
-      <td class="num">${fmt(r.totals.distance_km, 1)}</td><td class="num">${fmt(r.totals.total_cost_vnd)}</td><td class="num">${fmt(r.totals.co2_direct_kg, 2)}</td>
+      <td class="num">${fmt(r.totals.distance_km, 1)}</td><td class="num">${fmt(r.totals.total_cost_vnd)}</td><td class="num">${fmt(r.totals.co2_fossil_kg, 2)}</td>
       <td style="white-space:nowrap"><button class="sm" data-open="${r.id}">Mở</button> <button class="secondary sm" data-dl="/api/reports/${r.id}?format=xlsx">⬇ XLSX</button> <button class="secondary sm" data-dl="/api/reports/${r.id}?format=csv">⬇ CSV</button></td></tr>`).join('')
   }</tbody></table></div>` : empty('🗂', 'Chưa có lần tối ưu nào.');
 }
@@ -714,12 +724,17 @@ function renderConfigEditor() {
         <td>${f.ethanol_share_volume != null ? input(`fuels.${k}.ethanol_share_volume`, f.ethanol_share_volume, 'number', 80) : '—'}</td>
         <td><select data-path="fuels.${k}.status" data-orig="${f.status}">${['supported', 'simulation', 'unverified'].map(s => `<option ${s === f.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
         <td>${boolSel(`fuels.${k}.official`, f.official)}</td></tr>`).join('')}</tbody></table></div>
+    <h3 style="margin:18px 0 10px">Nguồn giá điện cho xe điện</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>Nguồn</th><th>Giá (VND/kWh)</th><th>Nguồn giá</th><th>Ngày áp dụng</th></tr></thead><tbody>${
+      Object.entries(CFG.electricity_price_sources || {}).map(([k, s]) => `<tr><td><b>${esc(s.label)}</b><br><small class="muted">${k}</small></td><td>${input(`electricity_price_sources.${k}.price_vnd`, s.price_vnd)}</td>
+        <td>${input(`electricity_price_sources.${k}.price_source`, s.price_source, 'text', 300)}</td><td>${input(`electricity_price_sources.${k}.price_date`, s.price_date, 'text', 110)}</td></tr>`).join('')}</tbody></table></div>
     <div class="grid cols-2" style="margin-top:18px">
       <div><h3 style="margin-bottom:10px">Tốc độ trung bình theo loại xe</h3><div class="tbl-wrap"><table><tbody>${
         Object.entries(CFG.vehicle_types).map(([k, v]) => `<tr><td>${esc(v.label)}</td><td>${input(`vehicle_types.${k}.speed_kmh`, v.speed_kmh, 'number', 90)} km/h</td></tr>`).join('')}</tbody></table></div></div>
       <div><h3 style="margin-bottom:10px">Tối ưu, định tuyến &amp; theo dõi</h3><div class="tbl-wrap"><table><tbody>
         <tr><td>Giá CO₂ quy đổi (VND/kg)</td><td>${input('default_weights.co2_vnd_per_kg', dw.co2_vnd_per_kg ?? 0)}</td></tr>
         <tr><td>Chi phí thời gian (VND/phút)</td><td>${input('default_weights.time_vnd_per_min', dw.time_vnd_per_min ?? 0)}</td></tr>
+        <tr><td>Chi phí tài xế (VND/giờ, 0 = không tính)</td><td>${input('costs.driver_vnd_per_hour', CFG.costs?.driver_vnd_per_hour ?? 0)}</td></tr>
         <tr><td>Thời gian giải mặc định (giây)</td><td>${input('default_weights.time_limit_s', dw.time_limit_s ?? 5)}</td></tr>
         <tr><td>Hệ số đường vòng (khi không có OSRM)</td><td>${input('routing.detour_factor', CFG.routing.detour_factor)}</td></tr>
         <tr><td>Ngưỡng xác nhận vị trí giao (m)</td><td>${input('delivery_check.max_distance_m', dc.max_distance_m ?? 300)}</td></tr>
@@ -770,16 +785,17 @@ function renderMethod() {
   $('#method').innerHTML = `<p class="hint">Phiên bản cấu hình: <code>${esc(CFG.version)}</code></p>
     <h3>Phạm vi phát thải</h3><p>${esc(CFG.scope_note)}</p>
     <h3>Công thức</h3><ul>
-      <li>Nhiên liệu (L) = km × tiêu hao (L/100km) / 100 · CO₂ (kg) = L × EF · Chi phí = L × giá</li>
+      <li>Nhiên liệu (L) = km × tiêu hao (L/100km) / 100 · CO₂ hóa thạch (kg) = L × (1 − x) × EF<sub>xăng</sub> (diesel: L × EF<sub>diesel</sub>) · Chi phí = L × giá</li>
       <li>Điện (kWh) = km × tiêu hao (kWh/100km) / 100 · CO₂ gián tiếp = kWh × EF lưới · CO₂ ống xả = 0</li>
-      <li>Xăng pha ethanol: EF ≈ (1 − x)·EF<sub>xăng</sub> + x·EF<sub>ethanol</sub>, x = tỷ lệ thể tích. Phần ethanol là CO₂ sinh học, báo cáo riêng.</li>
-      <li>Chi phí = km × chi phí vận hành/km + chi phí cố định mỗi xe dùng + chi phí năng lượng.</li>
-      <li>Hàm mục tiêu OR-Tools = chi phí + giá CO₂ quy đổi × kg CO₂ trực tiếp (+ chi phí thời gian nếu cấu hình).</li></ul>
+      <li>Xăng pha ethanol (x = tỷ lệ thể tích): CO₂ sinh học = L × x × EF<sub>ethanol</sub>, báo cáo riêng, không cộng vào CO₂ hóa thạch.</li>
+      <li>Chi phí = km × chi phí vận hành/km (chưa gồm năng lượng) + chi phí cố định mỗi xe dùng + chi phí năng lượng + chi phí tài xế (VND/giờ × thời gian tuyến, nếu cấu hình).</li>
+      <li>Giá điện: giá nhập riêng của xe → nguồn giá điện của xe (lưới / hợp đồng kho / trạm sạc) → giá mặc định (minh họa). Nguồn chưa có giá thì không tính chi phí và có cảnh báo.</li>
+      <li>Hàm mục tiêu OR-Tools = chi phí + giá CO₂ quy đổi × (kg CO₂ hóa thạch + kg CO₂ điện lưới) (+ chi phí thời gian nếu cấu hình).</li></ul>
     <h3>Hệ số nền</h3><div class="tbl-wrap"><table><thead><tr><th>Khóa</th><th>Giá trị</th><th>Nguồn</th><th>Năm</th></tr></thead><tbody>${
       Object.entries(b).map(([k, f]) => `<tr><td>${k}</td><td>${f.value} ${esc(f.unit)}</td><td>${esc(f.source)}</td><td>${f.year}</td></tr>`).join('')}</tbody></table></div>
     <h3>Giá nhiên liệu</h3><div class="tbl-wrap"><table><thead><tr><th>Mã</th><th>Tên</th><th class="num">Giá</th><th>Nguồn giá</th><th>Ngày áp dụng</th></tr></thead><tbody>${
       Object.entries(CFG.fuels).map(([k, f]) => `<tr><td>${k}</td><td>${esc(f.label)}</td><td class="num">${f.price_vnd == null ? '<span class="badge warn">chưa có giá</span>' : `${fmt(f.price_vnd)} ${esc(f.price_unit)}`}</td><td><small>${esc(f.price_source || '')}</small></td><td>${esc(f.price_date || '—')}</td></tr>`).join('')}</tbody></table></div>
-    <h3>Định tuyến &amp; baseline</h3><p>Khoảng cách ước tính = đường chim bay × ${CFG.routing.detour_factor} (ước tính; IT có thể nối dịch vụ bản đồ đường thực OSRM qua biến môi trường <code>OSRM_URL</code>). Baseline: lấy đơn theo thứ tự gốc, xếp vào xe đầu tiên còn chỗ (first-fit), không sắp xếp lại.</p>
+    <h3>Định tuyến &amp; baseline</h3><p>Bản chính thức dùng khoảng cách mạng đường bộ từ OSRM (biến môi trường <code>OSRM_URL</code>). Chỉ khi chưa có OSRM (fallback/demo): khoảng cách ≈ đường chim bay × ${CFG.routing.detour_factor}. Mỗi lần chạy ghi lại nguồn khoảng cách đã dùng. Baseline: lấy đơn theo thứ tự gốc, xếp vào xe đầu tiên còn chỗ (first-fit), không sắp xếp lại.</p>
     <h3>Theo dõi vị trí</h3><p>Tài xế chủ động bấm <b>Bắt đầu ca</b> mới chia sẻ vị trí; điện thoại gửi mỗi ${CFG.tracking?.ping_interval_s ?? 20} giây khi trang tài xế đang mở. Trình duyệt không cho theo dõi khi tắt màn hình/đóng trang — cần app di động nếu muốn theo dõi nền.</p>
     <h3>AI / ML</h3><p>Chưa có mô hình huấn luyện trên dữ liệu thật. Dữ liệu giao hàng thực tế (giờ đến, đúng/trễ, lý do thất bại, vệt GPS) đang được thu thập để làm nhãn cho giai đoạn ML.</p>`;
 }
@@ -812,6 +828,7 @@ $('#btn-pw').onclick = () => Auth.changePassword();
   applyRoles(); buildMenu(); applyDefaults(); updateBanner();
   $('#vf-type').innerHTML = Object.entries(CFG.vehicle_types).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
   $('#vf-fuel').innerHTML = fuelOptions($('#vf-type').value);
+  $('#vf-eps').innerHTML = epsOptions();
   await refreshDepot();
   const { body: runs } = await api('/api/optimization');
   const home = { fleet_manager: 'vehicles' }[ME.role] || 'overview';

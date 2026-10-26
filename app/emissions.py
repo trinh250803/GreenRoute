@@ -82,6 +82,30 @@ def resolve_factor(fuel_code: str, cfg: dict, override: dict | None = None) -> d
     }
 
 
+ELECTRICITY_CUSTOM = "custom"
+
+
+def resolve_price(vehicle: dict, cfg: dict) -> dict:
+    """Energy price for a vehicle: its own price > its electricity price source > the fuel's default.
+    Never invents a number: a chosen source without a price gives None and a warning."""
+    fuel = cfg["fuels"].get(vehicle.get("fuel_blend_code")) or {}
+    own = num(vehicle.get("fuel_price"))
+    if own is not None:
+        return {"price": own, "source": "Giá nhập riêng cho xe", "warning": None}
+    key = vehicle.get("electricity_price_source")
+    if fuel.get("kind") == "electric" and key:
+        if key == ELECTRICITY_CUSTOM:
+            return {"price": None, "source": "Tự nhập", "warning": "chọn nguồn giá điện “Tự nhập” nhưng chưa nhập giá"}
+        src = (cfg.get("electricity_price_sources") or {}).get(key)
+        if src:
+            p = num(src.get("price_vnd"))
+            return {"price": p, "source": src["label"],
+                    "warning": None if p is not None else f'nguồn giá điện “{src["label"]}” chưa có giá — quản trị viên cần nhập'}
+    p = num(fuel.get("price_vnd"))
+    return {"price": p, "source": fuel.get("price_source"),
+            "warning": None if p is not None else f'chưa có giá {fuel.get("label", "")} — không tính chi phí năng lượng'}
+
+
 def compute_trip(distance_km: float, vehicle: dict, cfg: dict) -> dict:
     fuel_code = vehicle.get("fuel_blend_code")
     fuel = cfg["fuels"].get(fuel_code)
@@ -104,11 +128,12 @@ def compute_trip(distance_km: float, vehicle: dict, cfg: dict) -> dict:
     amount = distance_km * rate / 100
     out["energy_amount"] = rnd(amount, 4)
     out["energy_unit"] = "kWh" if fuel["kind"] == "electric" else "L"
-    price = num(vehicle.get("fuel_price"))
+    pr = resolve_price(vehicle, cfg)
+    price = pr["price"]
+    out["price_used"] = price
+    out["price_source_used"] = pr["source"]
     if price is None:
-        price = num(fuel.get("price_vnd"))
-    if price is None:
-        warnings.append(f'Xe {vid}: chưa có giá {fuel["label"]} — không tính chi phí năng lượng')
+        warnings.append(f'Xe {vid}: {pr["warning"]}')
     else:
         out["energy_cost_vnd"] = round(amount * price)
 

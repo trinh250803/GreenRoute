@@ -2,8 +2,9 @@
 from .emissions import check_compatibility, compute_trip, rnd
 from .solver import solve, summarize
 
-METRICS = ["distance_km", "duration_min", "total_cost_vnd", "energy_cost_vnd", "co2_direct_kg",
-           "co2_grid_indirect_kg", "co2_per_km", "cost_per_order_vnd", "co2_per_order", "vehicles_used", "orders_unassigned"]
+METRICS = ["distance_km", "duration_min", "total_cost_vnd", "energy_cost_vnd", "co2_fossil_kg", "co2_biogenic_kg",
+           "co2_grid_indirect_kg", "co2_operational_kg", "co2_per_km", "cost_per_order_vnd", "co2_per_order",
+           "vehicles_used", "orders_unassigned"]
 
 
 def pct_change(base, val):

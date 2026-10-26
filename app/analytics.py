@@ -43,18 +43,20 @@ def analytics(db: dict) -> dict | None:
             "vehicle_id": r["vehicle_id"], "vehicle_type": r["vehicle_type"], "fuel": r["fuel_blend_code"],
             "stops": len(r["stops"]), "distance_km": r["distance_km"], "duration_min": r["duration_min"],
             "operating_cost_vnd": r["operating_cost_vnd"], "energy_cost_vnd": r["energy_cost_vnd"],
-            "co2_direct_kg": r["co2_direct_kg"], "co2_grid_indirect_kg": r["co2_grid_indirect_kg"],
+            "co2_fossil_kg": r["co2_fossil_kg"], "co2_biogenic_kg": r["co2_biogenic_kg"], "co2_grid_indirect_kg": r["co2_grid_indirect_kg"],
             "utilization_pct": r["utilization_weight_pct"], "peak_legs": r.get("peak_legs", 0),
             "peak_delay_min": r.get("peak_delay_min", 0), "late_risk": r.get("late_risk", 0),
             "delivered": ds.count("delivered"), "failed": ds.count("failed"),
         })
 
-    by_fuel = defaultdict(lambda: {"vehicles": 0, "distance_km": 0.0, "co2_direct_kg": 0.0, "co2_grid_indirect_kg": 0.0, "energy_cost_vnd": 0})
+    by_fuel = defaultdict(lambda: {"vehicles": 0, "distance_km": 0.0, "co2_fossil_kg": 0.0, "co2_biogenic_kg": 0.0,
+                                   "co2_grid_indirect_kg": 0.0, "energy_cost_vnd": 0})
     for v in by_vehicle:
         f = by_fuel[v["fuel"]]
         f["vehicles"] += 1
         f["distance_km"] += v["distance_km"]
-        f["co2_direct_kg"] += v["co2_direct_kg"] or 0
+        f["co2_fossil_kg"] += v["co2_fossil_kg"] or 0
+        f["co2_biogenic_kg"] += v["co2_biogenic_kg"] or 0
         f["co2_grid_indirect_kg"] += v["co2_grid_indirect_kg"] or 0
         f["energy_cost_vnd"] += v["energy_cost_vnd"] or 0
 
@@ -156,8 +158,8 @@ def vehicle_detail(db: dict, vehicle_id: str) -> dict | None:
         "vehicle": {**v, "start": fmt_time(v["start_time"]), "end": fmt_time(v["end_time"])},
         "driver": drv and {"username": drv["username"], "full_name": drv["full_name"], "last_login_at": drv.get("last_login_at")},
         "route": route and {**{k: route.get(k) for k in ("distance_km", "duration_min", "start", "end", "load_weight_kg", "utilization_weight_pct",
-                                                        "operating_cost_vnd", "energy_cost_vnd", "energy_amount", "energy_unit", "co2_direct_kg",
-                                                        "co2_grid_indirect_kg", "factor", "peak_legs", "peak_delay_min", "late_risk")},
+                                                        "operating_cost_vnd", "energy_cost_vnd", "energy_amount", "energy_unit", "co2_fossil_kg",
+                                                        "co2_biogenic_kg", "co2_grid_indirect_kg", "factor", "peak_legs", "peak_delay_min", "late_risk")},
                             "stops": [{**s, **{k: deliveries.get(s["order_id"], {}).get(k) for k in ("status", "location_check")}} for s in route["stops"]]},
         "tracking": {"sharing": bool(tr.get("sharing")), "last": tr.get("last"), "points": len(tr.get("points", []))},
         "history": _audit_for(db, "vehicle_id", vehicle_id),

@@ -39,7 +39,7 @@ def test_electric_tailpipe_zero_grid_separate():
     t = compute_trip(100, {"vehicle_id": "E", "fuel_blend_code": "electricity", "consumption_rate": 3}, CFG)
     assert t["energy_amount"] == 3
     assert t["co2_direct_kg"] == 0
-    assert t["co2_grid_indirect_kg"] == pytest.approx(3 * 0.6592)
+    assert t["co2_grid_indirect_kg"] == pytest.approx(3 * CFG["base_factors"]["grid_vn"]["value"])
 
 
 def test_ethanol_blend_split_fossil_biogenic():
@@ -126,3 +126,39 @@ def test_same_route_fuel_scenario(problem, optimized):
     incompatible = "diesel" if CFG["fuels"][route["fuel_blend_code"]]["kind"] == "electric" else "electricity"
     bad = run_fuel_scenario(optimized, problem["vehicles"], problem["orders"], None, CFG, {vid: {"fuel_blend_code": incompatible}}, "same_route")
     assert not bad["ok"]
+
+
+def test_grid_factor_is_2024_value():
+    # Bug log 001: project team's final figure, Công văn 11232/BNNMT-BĐKH (2024 grid data).
+    g = CFG["base_factors"]["grid_vn"]
+    assert g["value"] == 0.6187 and g["year"] == 2024
+    t = compute_trip(100, {"vehicle_id": "E", "fuel_blend_code": "electricity", "consumption_rate": 18}, CFG)
+    assert t["co2_grid_indirect_kg"] == pytest.approx(11.1366)  # 18 kWh × 0.6187
+
+
+def test_electricity_price_source():
+    # CR 006: own price > the vehicle's price source > default; a source without a price is not guessed.
+    ev = {"vehicle_id": "E", "fuel_blend_code": "electricity", "consumption_rate": 10}
+    grid_price = CFG["electricity_price_sources"]["home_grid"]["price_vnd"]
+    assert compute_trip(100, {**ev, "electricity_price_source": "home_grid"}, CFG)["energy_cost_vnd"] == round(10 * grid_price)
+    assert compute_trip(100, {**ev, "electricity_price_source": "home_grid", "fuel_price": 5000}, CFG)["energy_cost_vnd"] == 50000
+    assert compute_trip(100, ev, CFG)["energy_cost_vnd"] == round(10 * CFG["fuels"]["electricity"]["price_vnd"])
+    t = compute_trip(100, {**ev, "electricity_price_source": "public_charger"}, CFG)
+    assert t["energy_cost_vnd"] is None and any("chưa có giá" in w for w in t["warnings"])
+
+
+def test_driver_cost_counted_once_when_configured():
+    # CR 005: driver cost per hour is added to the total only when configured (default 0).
+    from app.solver import solve
+    orders = [{"order_id": "A", "latitude": 10.80, "longitude": 106.70, "weight_kg": 1, "volume_m3": 0.01,
+               "tw_start": None, "tw_end": None, "service_time_min": 5, "priority": 0}]
+    veh = [{"vehicle_id": "V", "vehicle_type": "van", "available": True, "capacity_weight_kg": 100, "capacity_volume_m3": 1,
+            "cost_per_km": 1000, "fixed_cost_vnd": 0, "fuel_blend_code": "diesel", "consumption_rate": 10, "fuel_price": None,
+            "start_time": 480, "end_time": 1080, "speed_kmh": 30}]
+    matrix = [[0, 6], [6, 0]]
+    base = solve(orders, veh, matrix, CFG, time_limit_s=1)["totals"]
+    paid = solve(orders, veh, matrix, {**CFG, "costs": {"driver_vnd_per_hour": 60000}}, time_limit_s=1)
+    r = paid["routes"][0]
+    assert base["driver_cost_vnd"] == 0
+    assert r["driver_cost_vnd"] == round(r["duration_min"] / 60 * 60000)
+    assert paid["totals"]["total_cost_vnd"] == base["total_cost_vnd"] + r["driver_cost_vnd"]

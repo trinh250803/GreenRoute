@@ -61,6 +61,9 @@ def test_same_route_fuel_switch_changes_only_fuel_terms(ctx):
     # energy_amount is shown rounded to 4 decimals; allow that rounding times the price
     assert s["energy_cost_vnd"] == pytest.approx(r["energy_amount"] * cfg["fuels"]["E10"]["price_vnd"], abs=1 + 0.00005 * cfg["fuels"]["E10"]["price_vnd"])
     assert s["co2_biogenic_kg"] == pytest.approx(r["energy_amount"] * 0.10 * ETH, abs=1e-3)
+    assert s["co2_fossil_kg"] == pytest.approx(r["energy_amount"] * 0.90 * GAS, abs=1e-3)
+    t = body["result"]["totals"]
+    assert t["co2_operational_kg"] == pytest.approx(t["co2_fossil_kg"] + t["co2_grid_indirect_kg"], abs=1e-2)
     # Reusing the E5 consumption for E10 is flagged, not silently assumed (Phụ lục 2 §2).
     assert any("dùng lại mức tiêu hao" in w for w in body["result"]["totals"]["warnings"])
 
@@ -99,3 +102,15 @@ def test_incompatible_fuel_is_rejected(ctx):
     res = scenario(ctx, {r["vehicle_id"]: {"fuel_blend_code": "electricity"}})  # xe máy xăng không chạy điện
     assert res.status_code == 422
     assert any("tiêu hao mới" in e["error"] for e in res.json()["errors"])  # và L/100km không dùng được cho kWh
+
+
+def test_carbon_penalty_uses_fossil_plus_grid_co2(ctx):
+    """Bug log 003 / CR 004: EVs pay for grid CO2, ethanol's biogenic CO2 is not penalised."""
+    from app.solver import prepare_vehicles
+    cfg = ctx[3]
+    base = {"available": True, "cost_per_km": 0, "fuel_price": 0, "consumption_rate": 10}
+    ev = prepare_vehicles([{**base, "vehicle_id": "EV", "fuel_blend_code": "electricity"}], cfg, {"co2_vnd_per_kg": 1000})[0]
+    e10 = prepare_vehicles([{**base, "vehicle_id": "E10", "fuel_blend_code": "E10"}], cfg, {"co2_vnd_per_kg": 1000})[0]
+    grid = cfg["base_factors"]["grid_vn"]["value"]
+    assert ev["_per_km"] == pytest.approx(10 / 100 * grid * 1000)          # 0.1 kWh/km × grid EF × price
+    assert e10["_per_km"] == pytest.approx(10 / 100 * 0.9 * GAS * 1000)     # fossil share only
